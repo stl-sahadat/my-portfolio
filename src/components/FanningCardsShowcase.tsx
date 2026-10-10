@@ -157,26 +157,45 @@ export default function FanningCardsShowcase({
   // Pure 60 FPS RequestAnimationFrame Loop (Zero React Re-render, Zero Stutter)
   useEffect(() => {
     if (total <= 0) return;
-    let animId;
+    let animId: number;
+    let isRunning = false;
     lastTimeRef.current = performance.now();
-    let isVisible = true;
-    let observer = null;
+    let observer: IntersectionObserver | null = null;
+
+    const startLoop = () => {
+      if (!isRunning) {
+        isRunning = true;
+        lastTimeRef.current = performance.now();
+        animId = requestAnimationFrame(loop);
+      }
+    };
+
+    const stopLoop = () => {
+      if (isRunning) {
+        isRunning = false;
+        cancelAnimationFrame(animId);
+      }
+    };
 
     if (typeof IntersectionObserver !== 'undefined' && containerRef.current) {
       observer = new IntersectionObserver(
         (entries) => {
-          isVisible = entries[0]?.isIntersecting ?? true;
+          const visible = entries[0]?.isIntersecting ?? true;
+          if (visible) {
+            startLoop();
+          } else {
+            stopLoop();
+          }
         },
-        { threshold: 0.05 }
+        { threshold: 0.02 }
       );
       observer.observe(containerRef.current);
+    } else {
+      startLoop();
     }
 
-    const loop = (now) => {
-      if (!isVisible) {
-        animId = requestAnimationFrame(loop);
-        return;
-      }
+    const loop = (now: number) => {
+      if (!isRunning) return;
 
       // Guard against frame jump on tab switch
       const dt = Math.min((now - lastTimeRef.current) / 1000, 0.05);
@@ -258,13 +277,14 @@ export default function FanningCardsShowcase({
         }
       }
 
-      animId = requestAnimationFrame(loop);
+      if (isRunning) {
+        animId = requestAnimationFrame(loop);
+      }
     };
 
-    animId = requestAnimationFrame(loop);
     return () => {
       if (observer) observer.disconnect();
-      cancelAnimationFrame(animId);
+      stopLoop();
     };
   }, [total]);
 

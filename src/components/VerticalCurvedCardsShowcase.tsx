@@ -164,26 +164,45 @@ export default function VerticalCurvedCardsShowcase({
   // 60 FPS GPU-Accelerated RequestAnimationFrame Loop
   useEffect(() => {
     if (total <= 0) return;
-    let animId;
+    let animId: number;
+    let isRunning = false;
     lastTimeRef.current = performance.now();
-    let isVisible = true;
-    let observer = null;
+    let observer: IntersectionObserver | null = null;
+
+    const startLoop = () => {
+      if (!isRunning) {
+        isRunning = true;
+        lastTimeRef.current = performance.now();
+        animId = requestAnimationFrame(loop);
+      }
+    };
+
+    const stopLoop = () => {
+      if (isRunning) {
+        isRunning = false;
+        cancelAnimationFrame(animId);
+      }
+    };
 
     if (typeof IntersectionObserver !== 'undefined' && containerRef.current) {
       observer = new IntersectionObserver(
         (entries) => {
-          isVisible = entries[0]?.isIntersecting ?? true;
+          const visible = entries[0]?.isIntersecting ?? true;
+          if (visible) {
+            startLoop();
+          } else {
+            stopLoop();
+          }
         },
-        { threshold: 0.05 }
+        { threshold: 0.02 }
       );
       observer.observe(containerRef.current);
+    } else {
+      startLoop();
     }
 
-    const loop = (now) => {
-      if (!isVisible) {
-        animId = requestAnimationFrame(loop);
-        return;
-      }
+    const loop = (now: number) => {
+      if (!isRunning) return;
 
       const dt = Math.min((now - lastTimeRef.current) / 1000, 0.05);
       lastTimeRef.current = now;
@@ -224,11 +243,11 @@ export default function VerticalCurvedCardsShowcase({
 
         const style = getVerticalCardStyle(diff);
         cardEl.style.transform = `translate3d(0, ${style.translateY}px, ${style.translateZ}px) rotateX(${style.rotateX}deg) scale(${style.scale})`;
-        cardEl.style.opacity = style.opacity;
+        cardEl.style.opacity = String(style.opacity);
 
         if (cardEl.dataset.z !== String(style.zIndex)) {
           cardEl.dataset.z = String(style.zIndex);
-          cardEl.style.zIndex = style.zIndex;
+          cardEl.style.zIndex = String(style.zIndex);
         }
 
         const isFront = Math.abs(diff) < 0.45;
@@ -244,13 +263,13 @@ export default function VerticalCurvedCardsShowcase({
         }
       }
 
-      animId = requestAnimationFrame(loop);
+      if (isRunning) {
+        animId = requestAnimationFrame(loop);
+      }
     };
 
-    animId = requestAnimationFrame(loop);
-
     return () => {
-      cancelAnimationFrame(animId);
+      stopLoop();
       if (observer) observer.disconnect();
     };
   }, [total]);

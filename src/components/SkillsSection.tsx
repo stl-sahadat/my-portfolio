@@ -114,9 +114,31 @@ const SVG_CATEGORIES = [
 
 export default function SkillsSection() {
   const [percent, setPercent] = useState(0); // 0 to 100
+  const sectionRef = React.useRef<HTMLElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  // 0% to 100% charging cycle loop
+  // Zero-CPU optimization: Only activate SVG state loop when section is on-screen
   useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setIsVisible(entries[0]?.isIntersecting ?? false);
+      },
+      { threshold: 0.02 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // 0% to 100% charging cycle loop (Paused when offscreen)
+  useEffect(() => {
+    if (!isVisible) return;
+
     const timer = setInterval(() => {
       setPercent((prev) => {
         if (prev >= 100) return 100;
@@ -125,17 +147,19 @@ export default function SkillsSection() {
     }, 80);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [isVisible]);
 
   // Hold 100% full green state for 4.5 seconds then loop
   useEffect(() => {
+    if (!isVisible) return;
+
     if (percent >= 100) {
       const resetTimer = setTimeout(() => {
         setPercent(0);
       }, 4500);
       return () => clearTimeout(resetTimer);
     }
-  }, [percent]);
+  }, [percent, isVisible]);
 
   const isFull = percent >= 100;
   const isCharging = percent > 0 && percent < 100;
@@ -145,6 +169,7 @@ export default function SkillsSection() {
 
   return (
     <section
+      ref={sectionRef}
       id="skills"
       className="w-full bg-black dark:bg-black light:bg-[#f8fafc] transition-colors duration-300 relative overflow-hidden select-none flex flex-col items-center pb-16 scroll-mt-28 min-h-[850px]"
       style={{ paddingTop: '150px' }}

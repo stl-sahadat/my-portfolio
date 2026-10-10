@@ -438,24 +438,46 @@ export default function CurvedCylinderShowcase({
       // ============================================================
       // 6. Smooth 60fps Animation Loop (All-Time Continuous Rotation & Streaming)
       // ============================================================
+      // 5. ANIMATION & RENDER LOOP (Zero Overhead: Completely stops when off-screen)
+      // ============================================================
       let lastTime = performance.now();
-      let isVisible = true;
-      let observer = null;
+      let isRunning = false;
+      let observer: IntersectionObserver | null = null;
+
+      const startLoop = () => {
+        if (!isRunning) {
+          isRunning = true;
+          lastTime = performance.now();
+          animationId = requestAnimationFrame(animate);
+        }
+      };
+
+      const stopLoop = () => {
+        if (isRunning) {
+          isRunning = false;
+          cancelAnimationFrame(animationId);
+        }
+      };
+
       if (typeof IntersectionObserver !== 'undefined' && mount) {
         observer = new IntersectionObserver(
           (entries) => {
-            isVisible = entries[0]?.isIntersecting ?? true;
+            const visible = entries[0]?.isIntersecting ?? true;
+            if (visible) {
+              startLoop();
+            } else {
+              stopLoop();
+            }
           },
-          { threshold: 0.05 }
+          { threshold: 0.02 }
         );
         observer.observe(mount);
+      } else {
+        startLoop();
       }
 
-      const animate = (now) => {
-        if (!isVisible) {
-          animationId = requestAnimationFrame(animate);
-          return;
-        }
+      const animate = (now: number) => {
+        if (!isRunning) return;
 
         const delta = Math.min((now - lastTime) / 1000, 0.05);
         lastTime = now;
@@ -513,15 +535,15 @@ export default function CurvedCylinderShowcase({
         }
 
         renderer.render(scene, camera);
-        animationId = requestAnimationFrame(animate);
+        if (isRunning) {
+          animationId = requestAnimationFrame(animate);
+        }
       };
-
-      animationId = requestAnimationFrame(animate);
 
       // Cleanup on unmount
       return () => {
         if (observer) observer.disconnect();
-        cancelAnimationFrame(animationId);
+        stopLoop();
         window.removeEventListener('resize', handleResize);
         dom.removeEventListener('mousedown', handlePointerDown);
         window.removeEventListener('mousemove', handlePointerMove);

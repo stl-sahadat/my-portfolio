@@ -18,16 +18,12 @@ export default function MouseSpotlight() {
       return;
     }
 
-    let animId;
+    let animId: number | null = null;
     let targetX = -1000;
     let targetY = -1000;
     let currentX = -1000;
     let currentY = -1000;
-
-    const handleMouseMove = (e) => {
-      targetX = e.clientX;
-      targetY = e.clientY;
-    };
+    let isRunning = false;
 
     const updateSpotlight = () => {
       // Snappy smooth follow on GPU
@@ -37,15 +33,30 @@ export default function MouseSpotlight() {
       if (spotlightRef.current) {
         spotlightRef.current.style.transform = `translate3d(${currentX - 300}px, ${currentY - 300}px, 0)`;
       }
-      animId = requestAnimationFrame(updateSpotlight);
+
+      // Automatically sleep when mouse is resting (within 0.3px)
+      if (Math.abs(targetX - currentX) > 0.3 || Math.abs(targetY - currentY) > 0.3) {
+        animId = requestAnimationFrame(updateSpotlight);
+      } else {
+        isRunning = false;
+        animId = null;
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      targetX = e.clientX;
+      targetY = e.clientY;
+      if (!isRunning) {
+        isRunning = true;
+        animId = requestAnimationFrame(updateSpotlight);
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    animId = requestAnimationFrame(updateSpotlight);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animId);
+      if (animId) cancelAnimationFrame(animId);
     };
   }, []);
 

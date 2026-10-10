@@ -193,6 +193,10 @@ export default function SpiderCursorCanvas() {
       isVisible = !document.hidden;
       if (isVisible) {
         lastTime = performance.now();
+        cancelAnimationFrame(animId);
+        animId = requestAnimationFrame(anim);
+      } else {
+        cancelAnimationFrame(animId);
       }
     };
 
@@ -202,10 +206,7 @@ export default function SpiderCursorCanvas() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     function anim(now) {
-      if (!isVisible) {
-        animId = requestAnimationFrame(anim);
-        return;
-      }
+      if (!isVisible) return;
 
       // 60FPS Frame Governor to prevent GPU drain on 120Hz/144Hz displays
       const elapsed = now - lastTime;
