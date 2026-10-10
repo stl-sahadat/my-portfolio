@@ -112,6 +112,26 @@ const SVG_CATEGORIES = [
   },
 ];
 
+// Floating sparkling embers & micro-bubbles matching realistic magma battery reference
+const SPARK_PARTICLES = [
+  { xRatio: 0.16, speed: 6.8, offset: 12, r: 2.2, color: '#fef08a' },
+  { xRatio: 0.28, speed: 8.4, offset: 55, r: 1.8, color: '#fde047' },
+  { xRatio: 0.45, speed: 5.6, offset: 90, r: 2.8, color: '#ffffff' },
+  { xRatio: 0.62, speed: 7.2, offset: 35, r: 2.0, color: '#fef08a' },
+  { xRatio: 0.82, speed: 6.2, offset: 75, r: 2.4, color: '#fb923c' },
+  { xRatio: 0.22, speed: 9.1, offset: 115, r: 1.5, color: '#fde047' },
+  { xRatio: 0.38, speed: 7.4, offset: 18, r: 2.0, color: '#ffffff' },
+  { xRatio: 0.54, speed: 8.8, offset: 68, r: 2.6, color: '#fef08a' },
+  { xRatio: 0.72, speed: 6.5, offset: 98, r: 1.9, color: '#f97316' },
+  { xRatio: 0.34, speed: 5.8, offset: 135, r: 2.3, color: '#ffffff' },
+  { xRatio: 0.66, speed: 8.0, offset: 28, r: 1.7, color: '#fde047' },
+  { xRatio: 0.86, speed: 8.2, offset: 85, r: 2.2, color: '#fef08a' },
+  { xRatio: 0.12, speed: 6.7, offset: 60, r: 2.0, color: '#fb923c' },
+  { xRatio: 0.48, speed: 9.5, offset: 145, r: 1.6, color: '#ffffff' },
+  { xRatio: 0.76, speed: 7.1, offset: 8, r: 2.5, color: '#fde047' },
+  { xRatio: 0.25, speed: 6.3, offset: 105, r: 2.1, color: '#fef08a' },
+];
+
 export default function SkillsSection() {
   const [percent, setPercent] = useState(0); // 0 to 100
   const sectionRef = React.useRef<HTMLElement | null>(null);
@@ -164,9 +184,6 @@ export default function SkillsSection() {
   const isFull = percent >= 100;
   const isCharging = percent > 0 && percent < 100;
 
-  // Dynamic Liquid Surface Wave Color
-  const waveSurfaceColor = isFull ? '#86efac' : percent > 60 ? '#f472b6' : '#fca5a5';
-
   return (
     <section
       ref={sectionRef}
@@ -174,13 +191,13 @@ export default function SkillsSection() {
       className="w-full bg-black dark:bg-black light:bg-[#f8fafc] transition-colors duration-300 relative overflow-hidden select-none flex flex-col items-center pb-16 scroll-mt-28 min-h-[850px]"
       style={{ paddingTop: '150px' }}
     >
-      {/* Studio Lighting Ambient Glow (Focused behind Battery) */}
+      {/* Studio Lighting Ambient Glow (Focused warm magma halo behind 3D Glass Battery) */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: isFull
             ? 'radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.22) 0%, transparent 62%)'
-            : 'radial-gradient(circle at 50% 50%, rgba(192, 132, 252, 0.08) 0%, transparent 68%)',
+            : 'radial-gradient(circle at 50% 52%, rgba(234, 88, 12, 0.16) 0%, rgba(220, 38, 38, 0.08) 35%, transparent 68%)',
           transition: 'background 0.8s ease',
         }}
       />
@@ -240,42 +257,118 @@ export default function SkillsSection() {
               </feMerge>
             </filter>
 
-            {/* Liquid Battery Mask for Clean Rounded Corner Fill */}
-            <clipPath id="batteryLiquidClip">
-              <rect x="500" y="305" width="200" height="290" rx="34" ry="34" />
+            {/* Glowing Molten Amber/Fire Text Filter (Matches Reference 7% Luminance) */}
+            <filter id="amberFireTextGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="8" result="outerGlow" />
+              <feGaussianBlur stdDeviation="3" result="innerGlow" />
+              <feMerge>
+                <feMergeNode in="outerGlow" />
+                <feMergeNode in="innerGlow" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* Molten Floor Radiant Bloom Filter */}
+            <filter id="moltenFloorBloom" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="10" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* Sparkling Embers Glow Filter */}
+            <filter id="sparkleGlow" x="-80%" y="-80%" width="260%" height="260%">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* 3D Glass Cylinder Inner Clip Path */}
+            <clipPath id="glassCylinderClip">
+              <rect x="500" y="308" width="200" height="290" rx="28" ry="28" />
             </clipPath>
 
-            {/* 3D Glass Cylinder Back Chamber Gradient */}
-            <linearGradient id="cylinderChamberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#08080a" />
-              <stop offset="18%" stopColor="#18181b" />
-              <stop offset="50%" stopColor="#222228" />
-              <stop offset="82%" stopColor="#18181b" />
-              <stop offset="100%" stopColor="#08080a" />
+            {/* Stepped Chrome Metallic Cap Gradient */}
+            <linearGradient id="chromeMetallicGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#1e222a" />
+              <stop offset="12%" stopColor="#475569" />
+              <stop offset="28%" stopColor="#cbd5e1" />
+              <stop offset="38%" stopColor="#ffffff" />
+              <stop offset="52%" stopColor="#94a3b8" />
+              <stop offset="70%" stopColor="#334155" />
+              <stop offset="88%" stopColor="#64748b" />
+              <stop offset="100%" stopColor="#0f172a" />
             </linearGradient>
 
-            {/* Glass Rim Specular Highlight Gradient */}
-            <linearGradient id="glassRimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-              <stop offset="45%" stopColor="#a1a1aa" stopOpacity="0.75" />
-              <stop offset="100%" stopColor="#52525b" stopOpacity="0.85" />
+            {/* Dark Transparent Glass Body (Deep obsidian glass with warm inner crimson refraction) */}
+            <linearGradient id="darkGlassChamberGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#0a0507" stopOpacity="0.95" />
+              <stop offset="16%" stopColor="#190a0e" stopOpacity="0.84" />
+              <stop offset="50%" stopColor="#250d12" stopOpacity="0.65" />
+              <stop offset="84%" stopColor="#190a0e" stopOpacity="0.84" />
+              <stop offset="100%" stopColor="#0a0507" stopOpacity="0.95" />
             </linearGradient>
 
-            {/* Liquid Gradient Themes */}
+            {/* Left Glass Specular Reflection Highlight Streak */}
+            <linearGradient id="leftGlassSpecularGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="25%" stopColor="#ffffff" stopOpacity="0.45" />
+              <stop offset="55%" stopColor="#ffffff" stopOpacity="0.85" />
+              <stop offset="85%" stopColor="#ffffff" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            </linearGradient>
+
+            {/* Right Glass Specular Reflection Highlight Streak */}
+            <linearGradient id="rightGlassSpecularGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="40%" stopColor="#ffffff" stopOpacity="0.32" />
+              <stop offset="80%" stopColor="#ffffff" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            </linearGradient>
+
+            {/* Fiery Magma Translucent Energy Liquid (Photo-Realistic Glowing Molten Red-Amber) */}
+            <linearGradient id="fieryMagmaLiquidGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.98" />
+              <stop offset="22%" stopColor="#ea580c" stopOpacity="0.95" />
+              <stop offset="55%" stopColor="#e11d48" stopOpacity="0.92" />
+              <stop offset="82%" stopColor="#dc2626" stopOpacity="0.88" />
+              <stop offset="100%" stopColor="#fb923c" stopOpacity="0.86" />
+            </linearGradient>
+
+            {/* Liquid Meniscus Top Ellipse Gradient */}
+            <linearGradient id="meniscusSurfaceGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ea580c" />
+              <stop offset="25%" stopColor="#f97316" />
+              <stop offset="50%" stopColor="#fef08a" />
+              <stop offset="75%" stopColor="#f97316" />
+              <stop offset="100%" stopColor="#ea580c" />
+            </linearGradient>
+
+            {/* Full 100% Charged Emerald Hyper-Liquid */}
             <linearGradient id="liquidGradGreen" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor="#14532d" />
-              <stop offset="55%" stopColor="#16a34a" />
-              <stop offset="100%" stopColor="#4ade80" />
+              <stop offset="0%" stopColor="#15803d" stopOpacity="0.98" />
+              <stop offset="50%" stopColor="#22c55e" stopOpacity="0.92" />
+              <stop offset="100%" stopColor="#86efac" stopOpacity="0.88" />
             </linearGradient>
-            <linearGradient id="liquidGradPurple" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor="#581c87" />
-              <stop offset="55%" stopColor="#9333ea" />
-              <stop offset="100%" stopColor="#c084fc" />
+
+            {/* Molten Fiery Base Ring Gradient */}
+            <linearGradient id="moltenBaseRingGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.6" />
+              <stop offset="25%" stopColor="#f59e0b" stopOpacity="0.95" />
+              <stop offset="50%" stopColor="#fef08a" stopOpacity="1" />
+              <stop offset="75%" stopColor="#f59e0b" stopOpacity="0.95" />
+              <stop offset="100%" stopColor="#ef4444" stopOpacity="0.6" />
             </linearGradient>
-            <linearGradient id="liquidGradRed" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor="#7f1d1d" />
-              <stop offset="55%" stopColor="#dc2626" />
-              <stop offset="100%" stopColor="#f87171" />
+
+            {/* Glass Cylinder Outer Rim Stroke */}
+            <linearGradient id="cylinderOuterRimGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#cbd5e1" stopOpacity="0.85" />
+              <stop offset="40%" stopColor="#475569" stopOpacity="0.4" />
+              <stop offset="80%" stopColor="#f97316" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="#fef08a" stopOpacity="0.9" />
             </linearGradient>
           </defs>
 
@@ -560,138 +653,352 @@ export default function SkillsSection() {
           })}
 
           {/* ================================================================ */}
-          {/* B. CENTRAL 3D CYBER POWER CELL (HIGH-TECH CYLINDRICAL CHAMBER)   */}
+          {/* B. CENTRAL 3D CYLINDRICAL GLASS BATTERY (HYPER-REALISTIC MAGMA CELL) */}
+          {/* Matches User's Reference Photo: Chrome Cap, Glass Reflections,   */}
+          {/* Fiery Liquid with Floating Embers & Luminous Amber "7%" Font HUD */}
           {/* ================================================================ */}
 
-          {/* 1. Sculpted Anodized Terminal Top Cap */}
+          {/* 1. Radiant Molten Floor Bloom (Amber-Orange glow reflecting beneath battery) */}
           <g>
-            {/* Terminal Collar Base */}
-            <rect
-              x="562"
-              y="297"
-              width="76"
-              height="8"
-              rx="2"
-              fill="#27272a"
-              stroke="#52525b"
-              strokeWidth="1"
+            <ellipse
+              cx="600"
+              cy="603"
+              rx="115"
+              ry="16"
+              fill={isFull ? '#22c55e' : '#ff4500'}
+              opacity={isFull ? 0.35 : 0.65}
+              filter="url(#moltenFloorBloom)"
             />
-            {/* Terminal Positive Nipple */}
+            <ellipse
+              cx="600"
+              cy="600"
+              rx="102"
+              ry="12"
+              fill={isFull ? '#86efac' : '#f59e0b'}
+              opacity={isFull ? 0.4 : 0.8}
+              filter="url(#moltenFloorBloom)"
+            />
+          </g>
+
+          {/* 2. Stepped Chrome Metallic Terminal Cap & Collar (3D Chrome Reflection) */}
+          <g>
+            {/* Top Positive Nipple / Button */}
             <rect
-              x="574"
-              y="286"
-              width="52"
-              height="12"
+              x="585"
+              y="278"
+              width="30"
+              height="10"
               rx="3"
-              fill={isFull ? '#22c55e' : '#e4e4e7'}
-              stroke={isFull ? '#86efac' : '#ffffff'}
-              strokeWidth="1.2"
-              filter={isFull ? 'url(#svgGreenGlow)' : undefined}
+              fill="url(#chromeMetallicGrad)"
+              stroke="#94a3b8"
+              strokeWidth="0.8"
             />
-            {/* Embossed Polarity Symbol (+) */}
+            <line
+              x1="587"
+              y1="279.5"
+              x2="613"
+              y2="279.5"
+              stroke="#ffffff"
+              strokeWidth="1.2"
+              strokeOpacity="0.9"
+            />
+            {/* Terminal Polarity Symbol (+) */}
             <text
               x="600"
-              y="295.5"
+              y="286.2"
               textAnchor="middle"
-              fill="#18181b"
-              fontSize="10"
+              fill="#0f172a"
+              fontSize="9"
               fontWeight="900"
               fontFamily="Inter, system-ui, sans-serif"
             >
               +
             </text>
+
+            {/* Stepped Chrome Neck Collar */}
+            <rect
+              x="568"
+              y="286"
+              width="64"
+              height="11"
+              rx="3"
+              fill="url(#chromeMetallicGrad)"
+              stroke="#475569"
+              strokeWidth="0.9"
+            />
+            {/* Chrome Bevel Seam Line */}
+            <line
+              x1="569"
+              y1="294"
+              x2="631"
+              y2="294"
+              stroke="#0f172a"
+              strokeWidth="1"
+              strokeOpacity="0.7"
+            />
+
+            {/* Heavy Anodized Flanged Main Collar Ring */}
+            <rect
+              x="552"
+              y="295"
+              width="96"
+              height="13"
+              rx="4"
+              fill="url(#chromeMetallicGrad)"
+              stroke="#64748b"
+              strokeWidth="1.2"
+            />
+            {/* Upper Chrome Specular Highlight Strip */}
+            <path
+              d="M 554,296.5 L 646,296.5"
+              stroke="#ffffff"
+              strokeWidth="1.2"
+              strokeOpacity="0.85"
+            />
+            {/* Underside Molten Internal Reflection on Chrome Lip */}
+            <path
+              d="M 554,307 L 646,307"
+              stroke={isFull ? '#86efac' : '#f97316'}
+              strokeWidth="1.4"
+              strokeOpacity="0.65"
+            />
+
+            {/* Glass Neck Shoulder Bevel (Transition to Glass Cylinder) */}
+            <rect
+              x="524"
+              y="304"
+              width="152"
+              height="8"
+              rx="4"
+              fill="#18181b"
+              stroke="#71717a"
+              strokeWidth="1"
+              strokeOpacity="0.5"
+            />
           </g>
 
-          {/* 2. 3D Cylindrical Glass Outer Shell */}
+          {/* 3. Dark Transparent Obsidian Glass Chamber (Chamber depth behind liquid) */}
           <rect
             x="500"
-            y="305"
+            y="308"
             width="200"
             height="290"
-            rx="34"
-            fill="url(#cylinderChamberGrad)"
-            stroke={isFull ? '#22c55e' : 'url(#glassRimGrad)'}
-            strokeWidth="3.2"
-            strokeOpacity={isFull ? 1 : 0.85}
-            filter={isFull ? 'url(#svgGreenGlow)' : undefined}
+            rx="28"
+            fill="url(#darkGlassChamberGrad)"
           />
 
-          {/* 3. Liquid Charging Wave Fill + Organic Wave Surface + Cyber Bubbles */}
-          <g clipPath="url(#batteryLiquidClip)">
-            {/* Dynamic Liquid Body */}
-            {(() => {
-              const liquidHeight = (290 * Math.max(5, percent)) / 100;
-              const surfaceY = 595 - liquidHeight;
-              const waveDelta = isCharging ? Math.sin(percent * 0.35) * 4 : 0;
-              const liquidFill = isFull
-                ? 'url(#liquidGradGreen)'
-                : percent > 60
-                ? 'url(#liquidGradPurple)'
-                : 'url(#liquidGradRed)';
+          {/* 4. Translucent Fiery Liquid with 3D Elliptical Meniscus & Floating Embers */}
+          {(() => {
+            const liquidHeight = (290 * Math.max(5, percent)) / 100;
+            const surfaceY = 598 - liquidHeight;
+            const liquidFill = isFull
+              ? 'url(#liquidGradGreen)'
+              : 'url(#fieryMagmaLiquidGrad)';
+            const meniscusStroke = isFull ? '#86efac' : '#fef08a';
 
-              return (
+            return (
+              <g clipPath="url(#glassCylinderClip)">
+                {/* Liquid Body Fill */}
+                <rect
+                  x="500"
+                  y={surfaceY}
+                  width="200"
+                  height={liquidHeight + 10}
+                  fill={liquidFill}
+                />
+
+                {/* Internal Magma Ambient Heat Wave */}
+                <ellipse
+                  cx="600"
+                  cy={Math.min(590, surfaceY + liquidHeight * 0.5)}
+                  rx="82"
+                  ry={Math.max(10, liquidHeight * 0.42)}
+                  fill={isFull ? '#22c55e' : '#ff3b00'}
+                  opacity={isFull ? 0.25 : 0.38}
+                  filter="url(#moltenFloorBloom)"
+                />
+
+                {/* Suspended Sparkling Embers & Micro-Bubbles inside liquid */}
+                {isCharging && (
+                  <g>
+                    {SPARK_PARTICLES.map((sp, idx) => {
+                      const sparkX = 508 + sp.xRatio * 184 + Math.sin(percent * 0.3 + idx) * 4;
+                      const sparkY = 590 - ((percent * sp.speed + sp.offset * 10) % Math.max(15, liquidHeight));
+                      return (
+                        <circle
+                          key={`spark-${idx}`}
+                          cx={sparkX}
+                          cy={sparkY}
+                          r={sp.r}
+                          fill={isFull ? '#ffffff' : sp.color}
+                          opacity={0.88}
+                          filter="url(#sparkleGlow)"
+                        />
+                      );
+                    })}
+                  </g>
+                )}
+
+                {/* 3D Liquid Meniscus (Curved Ellipse Top Surface with Sparkling Froth) */}
                 <g>
-                  {/* Liquid Body with Curved Wave Crest */}
-                  <path
-                    d={`M 495,${surfaceY} Q 550,${surfaceY - 5 - waveDelta} 600,${surfaceY} T 705,${surfaceY} L 705,605 L 495,605 Z`}
-                    fill={liquidFill}
-                    opacity="0.92"
+                  {/* Meniscus Elliptical Disc */}
+                  <ellipse
+                    cx="600"
+                    cy={surfaceY}
+                    rx="94"
+                    ry="9"
+                    fill={isFull ? '#22c55e' : 'url(#meniscusSurfaceGrad)'}
+                    opacity="0.95"
                   />
-
-                  {/* Liquid Wave Glowing Crest Line */}
-                  <path
-                    d={`M 495,${surfaceY} Q 550,${surfaceY - 5 - waveDelta} 600,${surfaceY} T 705,${surfaceY}`}
+                  {/* Glowing Meniscus Rim */}
+                  <ellipse
+                    cx="600"
+                    cy={surfaceY}
+                    rx="94"
+                    ry="9"
                     fill="none"
-                    stroke={waveSurfaceColor}
-                    strokeWidth="3.5"
-                    strokeOpacity="0.95"
+                    stroke={meniscusStroke}
+                    strokeWidth="2.4"
                     filter="url(#photonGlow)"
                   />
-
-                  {/* Organic Cyber Micro-Bubbles Rising Upward */}
+                  {/* Meniscus Sparkling Froth Dots */}
                   {isCharging && (
                     <g>
-                      <circle
-                        cx={545 + Math.sin(percent * 0.4) * 8}
-                        cy={590 - ((percent * 7.5) % Math.max(20, liquidHeight))}
-                        r="2.8"
-                        fill="#ffffff"
-                        opacity="0.6"
-                      />
-                      <circle
-                        cx={645 + Math.cos(percent * 0.5) * 10}
-                        cy={590 - ((percent * 6.2 + 50) % Math.max(20, liquidHeight))}
-                        r="2.2"
-                        fill="#ffffff"
-                        opacity="0.5"
-                      />
-                      <circle
-                        cx={595 + Math.sin(percent * 0.6) * 6}
-                        cy={590 - ((percent * 8.1 + 100) % Math.max(20, liquidHeight))}
-                        r="2.5"
-                        fill="#ffffff"
-                        opacity="0.65"
-                      />
+                      <circle cx={532 + Math.sin(percent * 0.5) * 4} cy={surfaceY + 1} r="2.2" fill="#ffffff" opacity="0.9" />
+                      <circle cx={562 + Math.cos(percent * 0.4) * 5} cy={surfaceY - 1} r="1.8" fill="#fef08a" opacity="0.85" />
+                      <circle cx={600 + Math.sin(percent * 0.6) * 6} cy={surfaceY} r="2.5" fill="#ffffff" opacity="0.95" />
+                      <circle cx={638 + Math.cos(percent * 0.5) * 5} cy={surfaceY - 1} r="1.9" fill="#fef08a" opacity="0.85" />
+                      <circle cx={668 + Math.sin(percent * 0.4) * 4} cy={surfaceY + 1} r="2.1" fill="#ffffff" opacity="0.9" />
                     </g>
                   )}
                 </g>
-              );
-            })()}
+              </g>
+            );
+          })()}
+
+          {/* 5. 3D Glass Front Reflections (Sitting ON TOP of liquid for real glass sheen) */}
+          <g pointerEvents="none">
+            {/* Left Primary Specular Highlight Band */}
+            <rect
+              x="510"
+              y="315"
+              width="10"
+              height="276"
+              rx="5"
+              fill="url(#leftGlassSpecularGrad)"
+            />
+            {/* Razor-sharp White Specular Line */}
+            <rect
+              x="513"
+              y="322"
+              width="2.5"
+              height="262"
+              rx="1.2"
+              fill="#ffffff"
+              opacity="0.75"
+            />
+
+            {/* Right Secondary Ambient Specular Band */}
+            <rect
+              x="678"
+              y="315"
+              width="8"
+              height="276"
+              rx="4"
+              fill="url(#rightGlassSpecularGrad)"
+            />
+            <rect
+              x="681"
+              y="324"
+              width="1.8"
+              height="258"
+              rx="0.9"
+              fill="#ffffff"
+              opacity="0.45"
+            />
+
+            {/* Curved Top Glass Rim Specular Reflection */}
+            <path
+              d="M 514,320 Q 600,332 686,320"
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="2.2"
+              strokeOpacity="0.8"
+              strokeLinecap="round"
+            />
+
+            {/* Curved Bottom Glass Base Specular Reflection */}
+            <path
+              d="M 514,586 Q 600,598 686,586"
+              fill="none"
+              stroke={isFull ? '#86efac' : '#fef08a'}
+              strokeWidth="2.4"
+              strokeOpacity="0.85"
+              strokeLinecap="round"
+            />
+
+            {/* Glass Cylinder Outer Rim Stroke */}
+            <rect
+              x="500"
+              y="308"
+              width="200"
+              height="290"
+              rx="28"
+              fill="none"
+              stroke="url(#cylinderOuterRimGrad)"
+              strokeWidth="2.4"
+            />
           </g>
 
-          {/* 5. Dynamic Central Readout HUD */}
+          {/* 6. Molten Fiery Base Foundation Collar */}
           <g>
-            {/* Big Bold Clean Percentage Display */}
+            <ellipse
+              cx="600"
+              cy="598"
+              rx="98"
+              ry="11"
+              fill="none"
+              stroke={isFull ? '#22c55e' : 'url(#moltenBaseRingGrad)'}
+              strokeWidth="3.4"
+              filter="url(#photonGlow)"
+            />
+            <ellipse
+              cx="600"
+              cy="598"
+              rx="96"
+              ry="9"
+              fill="#18181b"
+              opacity="0.55"
+            />
+          </g>
+
+          {/* 7. Radiant Molten Percentage Typography (Matching 7% Reference Photo) */}
+          <g>
+            {/* Soft Ambient Heat Bloom Behind Numbers */}
             <text
               x="600"
-              y="462"
+              y="472"
               textAnchor="middle"
-              fill="#ffffff"
-              fontSize="52"
+              fill={isFull ? '#22c55e' : '#f59e0b'}
+              fontSize="64"
               fontWeight="900"
-              fontFamily="Inter, system-ui, sans-serif"
-              filter={isFull ? 'url(#svgGreenGlow)' : undefined}
-              className="tracking-tight"
+              fontFamily="'Inter', 'Bebas Neue', system-ui, sans-serif"
+              filter={isFull ? 'url(#svgGreenGlow)' : 'url(#amberFireTextGlow)'}
+              opacity="0.88"
+            >
+              {percent}%
+            </text>
+            {/* Crisp Glowing Golden Core Text */}
+            <text
+              x="600"
+              y="472"
+              textAnchor="middle"
+              fill={isFull ? '#86efac' : '#fef08a'}
+              fontSize="64"
+              fontWeight="900"
+              fontFamily="'Inter', 'Bebas Neue', system-ui, sans-serif"
+              letterSpacing="1"
+              className="tracking-tight select-none"
             >
               {percent}%
             </text>
