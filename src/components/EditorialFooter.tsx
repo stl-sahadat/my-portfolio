@@ -340,12 +340,13 @@ export default function EditorialFooter() {
                     />
                   </div>
 
-                  {/* Submit Button: Exact Signature 3D GemActionButton matching "Let's Talk" */}
+                  {/* Submit Button: Signature 3D WhatsApp GemActionButton */}
                   <div className="pt-2 flex flex-col items-center">
                     <GemActionButton
                       type="submit"
                       disabled={isSubmitting}
-                      icon="gem"
+                      icon="whatsapp"
+                      variant="whatsapp"
                       size="lg"
                       showArrow={true}
                       className="w-full justify-center !py-3 !text-xs sm:!text-sm uppercase tracking-wider"

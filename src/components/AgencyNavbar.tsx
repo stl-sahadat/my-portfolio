@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Home, User, Layers, Cpu, Briefcase, BookOpen, Mail, Menu, X, ArrowUpRight } from 'lucide-react';
 import { portfolioData } from '../data/portfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
-import ThemeToggle3D from './ThemeToggle3D';
 
 // Brilliant Prismatic Crystal Diamond Gem Icon (Vibrant Cyan, Sapphire & Prismatic Fire)
 function Diamond3DIcon() {
@@ -104,28 +103,12 @@ export default function AgencyNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [theme, setTheme] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') || 'dark';
-    }
-    return 'dark';
-  });
-
-  // Handle Theme Toggle (Dark / Light)
+  // Enforce Clean Dark Mode by Default
   useEffect(() => {
-    if (theme === 'light') {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-      document.documentElement.classList.add('dark');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
+    document.documentElement.classList.remove('light');
+    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
+  }, []);
 
   // Real-Time Scroll Spy: Updates active section & URL in address bar with NO HASH (#)
   useEffect(() => {
@@ -278,31 +261,44 @@ export default function AgencyNavbar() {
                 <button
                   key={item.label}
                   onClick={() => handleItemClick(item.page)}
-                  className={`group relative inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-outfit uppercase tracking-wider font-semibold transition-all duration-300 cursor-pointer ${
+                  className={`group relative inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-outfit uppercase tracking-wider font-semibold transition-all duration-300 cursor-pointer overflow-hidden ${
                     isActive
-                      ? 'bg-gradient-to-r from-red-600 via-rose-600 to-red-500 text-white shadow-[0_0_16px_rgba(239,35,60,0.5),inset_0_1px_1px_rgba(255,255,255,0.4)] border border-red-400/50 scale-105'
-                      : 'text-zinc-200 dark:text-zinc-200 light:text-zinc-700 bg-white/[0.06] dark:bg-white/[0.06] light:bg-black/[0.04] backdrop-blur-md border border-white/20 dark:border-white/20 light:border-black/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_2px_6px_rgba(0,0,0,0.2)] hover:bg-white/[0.16] hover:border-white/40 hover:scale-105 active:scale-95'
+                      ? 'text-white bg-gradient-to-r from-red-950/70 via-[#15060a] to-red-950/70 backdrop-blur-xl border border-red-500/70 shadow-[0_0_20px_rgba(239,35,60,0.45),inset_0_1px_1px_rgba(255,255,255,0.6),inset_0_0_12px_rgba(239,35,60,0.25)] scale-[1.04]'
+                      : 'text-zinc-300 bg-white/[0.05] backdrop-blur-md border border-white/15 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_2px_6px_rgba(0,0,0,0.25)] hover:bg-white/[0.12] hover:border-white/35 hover:text-white hover:scale-105 active:scale-95'
                   }`}
                 >
+                  {/* Sweeping Shimmer Reflection on Active / Hover */}
+                  <span className={`absolute inset-0 -translate-x-[150%] transition-transform duration-700 ease-out bg-gradient-to-r from-transparent ${isActive ? 'via-red-400/25 animate-pulse' : 'group-hover:translate-x-[250%] via-white/20'} to-transparent pointer-events-none`} />
+
+                  {/* Luminous Pulsing Ruby Radar Indicator for Active Item */}
+                  {isActive && (
+                    <span className="relative flex h-1.5 w-1.5 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-80" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500 shadow-[0_0_8px_#ef233c]" />
+                    </span>
+                  )}
+
                   <Icon
                     size={13}
-                    className={
+                    className={`transition-all duration-300 ${
                       isActive
-                        ? 'text-white'
-                        : 'text-zinc-400 group-hover:text-crimson transition-colors duration-200'
-                    }
+                        ? 'text-red-400 drop-shadow-[0_0_6px_rgba(239,35,60,0.9)] scale-110'
+                        : 'text-zinc-400 group-hover:text-red-400 group-hover:scale-105'
+                    }`}
                   />
-                  <span>{item.label}</span>
+                  <span className="relative z-10">{item.label}</span>
+
+                  {/* Active Laser Horizon Underline Flare */}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-2.5 right-2.5 h-[1.5px] bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_8px_#ef233c] animate-pulse" />
+                  )}
                 </button>
               );
             })}
           </nav>
 
-          {/* RIGHT: 3D Neumorphic Theme Toggle & 3D Gem "Let's Talk" CTA */}
+          {/* RIGHT: 3D Gem "Let's Talk" CTA */}
           <div className="flex items-center gap-2.5 sm:gap-3.5">
-            
-            {/* 3D Glassmorphic Theme Toggle */}
-            <ThemeToggle3D theme={theme} toggleTheme={toggleTheme} />
 
             {/* 3D GEM "LET'S TALK" BUTTON (Matching media_1791171654132.png with hover shimmer & sparkle animation) */}
             <a
@@ -346,7 +342,6 @@ export default function AgencyNavbar() {
             <span className="font-mono text-xs text-zinc-400 uppercase tracking-widest">
               NAVIGATION
             </span>
-            <ThemeToggle3D theme={theme} toggleTheme={toggleTheme} />
           </div>
 
           <nav className="flex flex-col gap-2.5">
@@ -364,17 +359,27 @@ export default function AgencyNavbar() {
                     handleItemClick(item.page);
                     setMobileOpen(false);
                   }}
-                  className={`flex items-center justify-between py-2.5 px-4 rounded-full border font-outfit text-base font-bold uppercase transition-all cursor-pointer ${
+                  className={`relative flex items-center justify-between py-2.5 px-4 rounded-full border font-outfit text-base font-bold uppercase transition-all duration-300 cursor-pointer overflow-hidden ${
                     isActive
-                      ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white border-red-400/50 shadow-md shadow-red-600/30'
-                      : 'bg-white/[0.05] border-white/15 text-zinc-200 hover:text-crimson hover:bg-white/10'
+                      ? 'bg-gradient-to-r from-red-950/80 via-[#140609] to-red-950/80 text-white border-red-500/70 shadow-[0_0_18px_rgba(239,35,60,0.35),inset_0_1px_1px_rgba(255,255,255,0.4)]'
+                      : 'bg-white/[0.05] border-white/15 text-zinc-200 hover:text-red-400 hover:bg-white/10'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <Icon size={16} className={isActive ? 'text-white' : 'text-crimson'} />
+                  <div className="flex items-center gap-2.5 relative z-10">
+                    {isActive && (
+                      <span className="relative flex h-2 w-2 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-80" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 shadow-[0_0_8px_#ef233c]" />
+                      </span>
+                    )}
+                    <Icon size={16} className={isActive ? 'text-red-400 drop-shadow-[0_0_6px_rgba(239,35,60,0.9)]' : 'text-crimson'} />
                     <span>{item.label}</span>
                   </div>
-                  <span className={`text-xs font-mono ${isActive ? 'text-white/80' : 'text-zinc-500'}`}>0{idx + 1}</span>
+                  <span className={`text-xs font-mono relative z-10 ${isActive ? 'text-red-300' : 'text-zinc-500'}`}>0{idx + 1}</span>
+
+                  {isActive && (
+                    <span className="absolute bottom-0 left-4 right-4 h-[1.5px] bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_8px_#ef233c] animate-pulse" />
+                  )}
                 </button>
               );
             })}

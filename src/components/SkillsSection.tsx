@@ -839,36 +839,25 @@ export default function SkillsSection() {
                   </g>
                 )}
 
-                {/* 3D Liquid Meniscus (Curved Ellipse Top Surface with Sparkling Froth) */}
+                {/* 3D Liquid Surface Meniscus (Clean Soft Glow, Zero Harsh Lines) */}
                 <g>
-                  {/* Meniscus Elliptical Disc */}
+                  {/* Soft Meniscus Disc */}
                   <ellipse
                     cx="600"
                     cy={surfaceY}
-                    rx="94"
-                    ry="9"
+                    rx="95"
+                    ry="7"
                     fill={isFull ? '#22c55e' : 'url(#meniscusSurfaceGrad)'}
-                    opacity="0.95"
-                  />
-                  {/* Glowing Meniscus Rim */}
-                  <ellipse
-                    cx="600"
-                    cy={surfaceY}
-                    rx="94"
-                    ry="9"
-                    fill="none"
-                    stroke={meniscusStroke}
-                    strokeWidth="2.4"
-                    filter="url(#photonGlow)"
+                    opacity="0.55"
                   />
                   {/* Meniscus Sparkling Froth Dots */}
                   {isCharging && (
                     <g>
-                      <circle cx={532 + Math.sin(percent * 0.5) * 4} cy={surfaceY + 1} r="2.2" fill="#ffffff" opacity="0.9" />
-                      <circle cx={562 + Math.cos(percent * 0.4) * 5} cy={surfaceY - 1} r="1.8" fill="#fef08a" opacity="0.85" />
-                      <circle cx={600 + Math.sin(percent * 0.6) * 6} cy={surfaceY} r="2.5" fill="#ffffff" opacity="0.95" />
-                      <circle cx={638 + Math.cos(percent * 0.5) * 5} cy={surfaceY - 1} r="1.9" fill="#fef08a" opacity="0.85" />
-                      <circle cx={668 + Math.sin(percent * 0.4) * 4} cy={surfaceY + 1} r="2.1" fill="#ffffff" opacity="0.9" />
+                      <circle cx={532 + Math.sin(percent * 0.5) * 4} cy={surfaceY} r="2" fill="#ffffff" opacity="0.9" />
+                      <circle cx={562 + Math.cos(percent * 0.4) * 5} cy={surfaceY - 1} r="1.6" fill="#fef08a" opacity="0.85" />
+                      <circle cx={600 + Math.sin(percent * 0.6) * 6} cy={surfaceY} r="2.2" fill="#ffffff" opacity="0.95" />
+                      <circle cx={638 + Math.cos(percent * 0.5) * 5} cy={surfaceY - 1} r="1.8" fill="#fef08a" opacity="0.85" />
+                      <circle cx={668 + Math.sin(percent * 0.4) * 4} cy={surfaceY} r="2" fill="#ffffff" opacity="0.9" />
                     </g>
                   )}
                 </g>
@@ -876,68 +865,31 @@ export default function SkillsSection() {
             );
           })()}
 
-          {/* 5. 3D Glass Front Reflections (Sitting ON TOP of liquid for real glass sheen) */}
+          {/* 5. Clean 3D Glass Sheen (Soft Diffuse Lighting - Zero Sharp Lines) */}
           <g pointerEvents="none">
-            {/* Left Primary Specular Highlight Band */}
+            {/* Left Soft Ambient Specular Sheen (No sharp scratch lines) */}
             <rect
-              x="510"
-              y="315"
-              width="10"
-              height="276"
-              rx="5"
+              x="508"
+              y="314"
+              width="14"
+              height="278"
+              rx="7"
               fill="url(#leftGlassSpecularGrad)"
-            />
-            {/* Razor-sharp White Specular Line */}
-            <rect
-              x="513"
-              y="322"
-              width="2.5"
-              height="262"
-              rx="1.2"
-              fill="#ffffff"
-              opacity="0.75"
+              opacity="0.4"
             />
 
-            {/* Right Secondary Ambient Specular Band */}
+            {/* Right Soft Ambient Specular Sheen */}
             <rect
               x="678"
-              y="315"
-              width="8"
-              height="276"
-              rx="4"
+              y="314"
+              width="12"
+              height="278"
+              rx="6"
               fill="url(#rightGlassSpecularGrad)"
-            />
-            <rect
-              x="681"
-              y="324"
-              width="1.8"
-              height="258"
-              rx="0.9"
-              fill="#ffffff"
-              opacity="0.45"
+              opacity="0.3"
             />
 
-            {/* Curved Top Glass Rim Specular Reflection */}
-            <path
-              d="M 514,320 Q 600,332 686,320"
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth="2.2"
-              strokeOpacity="0.8"
-              strokeLinecap="round"
-            />
-
-            {/* Curved Bottom Glass Base Specular Reflection */}
-            <path
-              d="M 514,586 Q 600,598 686,586"
-              fill="none"
-              stroke={isFull ? '#86efac' : '#fef08a'}
-              strokeWidth="2.4"
-              strokeOpacity="0.85"
-              strokeLinecap="round"
-            />
-
-            {/* Glass Cylinder Outer Rim Stroke */}
+            {/* Clean Outer Glass Cylinder Silhouette */}
             <rect
               x="500"
               y="308"
@@ -946,29 +898,8 @@ export default function SkillsSection() {
               rx="28"
               fill="none"
               stroke="url(#cylinderOuterRimGrad)"
-              strokeWidth="2.4"
-            />
-          </g>
-
-          {/* 6. Molten Fiery Base Foundation Collar */}
-          <g>
-            <ellipse
-              cx="600"
-              cy="598"
-              rx="98"
-              ry="11"
-              fill="none"
-              stroke={isFull ? '#22c55e' : 'url(#moltenBaseRingGrad)'}
-              strokeWidth="3.4"
-              filter="url(#photonGlow)"
-            />
-            <ellipse
-              cx="600"
-              cy="598"
-              rx="96"
-              ry="9"
-              fill="#18181b"
-              opacity="0.55"
+              strokeWidth="2"
+              strokeOpacity="0.8"
             />
           </g>
 

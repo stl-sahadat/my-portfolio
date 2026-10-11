@@ -219,18 +219,18 @@ export function WhatsApp3DIcon({ className = "w-5 h-5 sm:w-5.5 sm:h-5.5" }) {
   return (
     <div className="relative inline-flex items-center justify-center shrink-0">
       {/* Ambient Emerald Neon Glow */}
-      <div className="absolute -inset-1 rounded-full bg-emerald-500/40 blur-md opacity-80 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <div className="absolute -inset-1 rounded-full bg-[#25D366]/40 blur-md opacity-85 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
       <svg
         viewBox="0 0 24 24"
         fill="none"
-        className={`${className} relative z-10 shrink-0 transition-transform duration-500 group-hover:scale-120 group-hover:-rotate-6 drop-shadow-[0_0_8px_rgba(16,185,129,0.85)]`}
+        className={`${className} relative z-10 shrink-0 transition-transform duration-500 group-hover:scale-120 group-hover:-rotate-6 drop-shadow-[0_0_8px_rgba(37,211,102,0.9)]`}
       >
         <defs>
           <linearGradient id="waGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#6ee7b7" />
-            <stop offset="50%" stopColor="#10b981" />
-            <stop offset="100%" stopColor="#047857" />
+            <stop offset="0%" stopColor="#4ade80" />
+            <stop offset="50%" stopColor="#25d366" />
+            <stop offset="100%" stopColor="#128c7e" />
           </linearGradient>
         </defs>
 
@@ -303,7 +303,7 @@ export function LinkedIn3DIcon({ className = "w-5 h-5 sm:w-5.5 sm:h-5.5" }) {
  * Standardized Luxury Action Button matching the "Let's Talk" CTA aesthetic:
  * - Sweeping holographic shimmer ray on hover
  * - Bespoke 3D metallic/crystal contextual icon (no emojis!)
- * - Luxury obsidian/noir gradient with purple & crimson glow
+ * - Luxury obsidian/noir gradient with purple & crimson glow (or emerald/neon glow for WhatsApp)
  * - Tactile 3D bevel and scale physics
  */
 export default function GemActionButton({
@@ -313,18 +313,35 @@ export default function GemActionButton({
   rel = 'noopener noreferrer',
   children,
   icon = 'gem', // 'gem' | 'demo' | 'globe' | 'github' | 'work' | 'layers' | 'whatsapp' | 'chat' | 'linkedin' | 'none' | ReactElement
+  variant, // 'default' | 'whatsapp'
   showArrow = true,
   size = 'md', // 'sm' | 'md' | 'lg'
   className = '',
   title,
   type = 'button',
   disabled = false,
+}: {
+  href?: string;
+  onClick?: (e?: any) => void;
+  target?: string;
+  rel?: string;
+  children: React.ReactNode;
+  icon?: string | React.ReactNode;
+  variant?: 'default' | 'whatsapp';
+  showArrow?: boolean;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  title?: string;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
 }) {
   const sizeClasses = {
     sm: 'px-4 py-1.5 text-xs',
     md: 'px-5 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm',
     lg: 'px-7 sm:px-8 py-3 sm:py-3.5 text-sm sm:text-base',
   };
+
+  const isWhatsApp = variant === 'whatsapp' || icon === 'whatsapp' || icon === 'chat';
 
   const renderIcon = () => {
     // If a custom React node is passed
@@ -356,23 +373,36 @@ export default function GemActionButton({
     }
   };
 
-  const baseClasses = `
-    group relative inline-flex items-center gap-2.5 rounded-full overflow-hidden
-    border border-white/30 dark:border-white/35
-    bg-gradient-to-r from-[#171722] via-[#101018] to-[#1c1220]
-    text-white font-outfit font-bold tracking-wide
-    transition-all duration-500 hover:scale-105 active:scale-95
-    shadow-[0_0_20px_rgba(168,85,247,0.35),0_0_25px_rgba(220,38,38,0.35),inset_0_1px_1px_rgba(255,255,255,0.5)]
-    hover:shadow-[0_0_35px_rgba(220,38,38,0.75),0_0_30px_rgba(168,85,247,0.65),inset_0_1px_2px_rgba(255,255,255,0.8)]
-    cursor-pointer select-none whitespace-nowrap
-    ${sizeClasses[size] || sizeClasses.md}
-    ${className}
-  `;
+  const baseClasses = isWhatsApp
+    ? `
+      group relative inline-flex items-center gap-2.5 rounded-full overflow-hidden
+      border border-emerald-400/40 dark:border-emerald-400/45 hover:border-emerald-300
+      bg-gradient-to-r from-[#0b2416] via-[#081a11] to-[#0a2e1c]
+      text-white font-outfit font-bold tracking-wide
+      transition-all duration-500 hover:scale-105 active:scale-95
+      shadow-[0_0_22px_rgba(37,211,102,0.38),0_0_32px_rgba(16,185,129,0.3),inset_0_1px_1px_rgba(255,255,255,0.6)]
+      hover:shadow-[0_0_38px_rgba(37,211,102,0.8),0_0_45px_rgba(16,185,129,0.7),inset_0_1px_2px_rgba(255,255,255,0.85)]
+      cursor-pointer select-none whitespace-nowrap
+      ${sizeClasses[size] || sizeClasses.md}
+      ${className}
+    `
+    : `
+      group relative inline-flex items-center gap-2.5 rounded-full overflow-hidden
+      border border-white/30 dark:border-white/35
+      bg-gradient-to-r from-[#171722] via-[#101018] to-[#1c1220]
+      text-white font-outfit font-bold tracking-wide
+      transition-all duration-500 hover:scale-105 active:scale-95
+      shadow-[0_0_20px_rgba(168,85,247,0.35),0_0_25px_rgba(220,38,38,0.35),inset_0_1px_1px_rgba(255,255,255,0.5)]
+      hover:shadow-[0_0_35px_rgba(220,38,38,0.75),0_0_30px_rgba(168,85,247,0.65),inset_0_1px_2px_rgba(255,255,255,0.8)]
+      cursor-pointer select-none whitespace-nowrap
+      ${sizeClasses[size] || sizeClasses.md}
+      ${className}
+    `;
 
   const content = (
     <>
       {/* Sweeping Holographic Shimmer Ray on Hover */}
-      <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[250%] transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
+      <div className={`absolute inset-0 -translate-x-[150%] group-hover:translate-x-[250%] transition-transform duration-700 ease-out bg-gradient-to-r from-transparent ${isWhatsApp ? 'via-emerald-300/30' : 'via-white/25'} to-transparent pointer-events-none`} />
 
       {/* Leading Contextual 3D Icon */}
       {renderIcon()}
@@ -386,7 +416,7 @@ export default function GemActionButton({
       {showArrow && (
         <ArrowUpRight
           size={14}
-          className="relative z-10 text-zinc-300 group-hover:text-white transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0"
+          className={`relative z-10 ${isWhatsApp ? 'text-emerald-300 group-hover:text-emerald-100' : 'text-zinc-300 group-hover:text-white'} transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 shrink-0`}
         />
       )}
     </>
