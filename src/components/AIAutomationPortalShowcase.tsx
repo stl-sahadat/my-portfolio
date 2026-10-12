@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { withBase } from '../utils/assetUrl';
 import {
   Search,
   Target,
@@ -158,7 +159,7 @@ export default function AIAutomationPortalShowcase({
       {/* 1. CINEMATIC STAGE BACKDROP (LEFT CLUSTER + PORTAL RING + LASER)     */}
       {/* ==================================================================== */}
       <img
-        src="/ai_portal_stage_backdrop.png"
+        src={withBase('/ai_portal_stage_backdrop.png')}
         alt="AI Slop to AI Power Stack Portal System"
         className="absolute inset-0 w-full h-full object-cover object-left pointer-events-none z-0"
         style={{

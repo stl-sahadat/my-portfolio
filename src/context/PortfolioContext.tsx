@@ -113,23 +113,36 @@ export function PortfolioProvider({ children }) {
   });
 
   // 5. Multi-Page Client Routing State (HTML5 History API - NO HASHTAGS)
+  const getCleanBase = () => {
+    const base = import.meta.env.BASE_URL || '/';
+    return base.endsWith('/') ? base.slice(0, -1) : base;
+  };
+
   const getPageFromUrl = () => {
     if (typeof window === 'undefined') return 'home';
+
+    const base = getCleanBase();
+    let pathname = window.location.pathname.toLowerCase();
+    if (base && pathname.startsWith(base.toLowerCase())) {
+      pathname = pathname.slice(base.length);
+    }
 
     // 1. If an old hashtag is present in the URL, immediately sanitize it into a clean URL
     if (window.location.hash) {
       const cleanHash = window.location.hash.toLowerCase().replace(/^#\/?/, '').split('?')[0].split('/')[0];
       if (['about', 'projects', 'skills', 'experience', 'blog', 'contact'].includes(cleanHash)) {
-        window.history.replaceState({ page: cleanHash }, '', `/${cleanHash}`);
+        const targetUrl = base ? `${base}/${cleanHash}` : `/${cleanHash}`;
+        window.history.replaceState({ page: cleanHash }, '', targetUrl);
         return cleanHash;
       } else if (cleanHash !== 'admin') {
-        window.history.replaceState({ page: 'home' }, '', '/');
+        const targetUrl = base ? `${base}/` : '/';
+        window.history.replaceState({ page: 'home' }, '', targetUrl);
         return 'home';
       }
     }
 
     // 2. Read clean pathname (e.g. /projects, /about, /skills)
-    const path = window.location.pathname.toLowerCase().replace(/^\/+/, '').split('/')[0];
+    const path = pathname.replace(/^\/+/, '').split('/')[0];
     if (['about', 'projects', 'skills', 'experience', 'blog', 'contact'].includes(path)) {
       return path;
     }
@@ -143,7 +156,8 @@ export function PortfolioProvider({ children }) {
   const navigateToPage = (pageName: string) => {
     const page = (pageName || 'home').toLowerCase();
     setCurrentPage(page);
-    const targetUrl = page === 'home' ? '/' : `/${page}`;
+    const base = getCleanBase();
+    const targetUrl = page === 'home' ? (base ? `${base}/` : '/') : (base ? `${base}/${page}` : `/${page}`);
 
     // Push clean URL to browser address bar (NO # HASHTAGS)
     if (window.location.pathname !== targetUrl || window.location.hash) {
@@ -164,10 +178,11 @@ export function PortfolioProvider({ children }) {
   useEffect(() => {
     // Sanitize any lingering hash on initial mount
     if (window.location.hash && window.location.hash !== '#admin') {
+      const base = getCleanBase();
       const cleanHash = window.location.hash.toLowerCase().replace(/^#\/?/, '').split('?')[0].split('/')[0];
       const targetUrl = ['about', 'projects', 'skills', 'experience', 'blog', 'contact'].includes(cleanHash)
-        ? `/${cleanHash}`
-        : '/';
+        ? (base ? `${base}/${cleanHash}` : `/${cleanHash}`)
+        : (base ? `${base}/` : '/');
       window.history.replaceState({ page: cleanHash || 'home' }, '', targetUrl);
     }
 

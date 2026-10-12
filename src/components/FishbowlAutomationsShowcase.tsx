@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { withBase } from '../utils/assetUrl';
 
 /**
  * FishbowlAutomationsShowcase - Cinema-Grade Photorealistic 3D Glass & Fluid Stage
@@ -101,7 +102,7 @@ export default function FishbowlAutomationsShowcase({
   // Preload Photorealistic Transparent Glass Stage (Background Removed)
   useEffect(() => {
     const img = new Image();
-    img.src = '/fishbowl-cutout.png';
+    img.src = withBase('/fishbowl-cutout.png');
     img.onload = () => {
       stageImgRef.current = img;
     };

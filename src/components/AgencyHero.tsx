@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { portfolioData } from '../data/portfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
+import { withBase } from '../utils/assetUrl';
 import AnimatedMetricCard from './AnimatedMetricCard';
 import LaserBadge from './LaserBadge';
 import GemActionButton from './GemActionButton';
@@ -347,10 +348,11 @@ export default function AgencyHero() {
             {/* Sahadat vai's Portrait Cutout with Seamless Bottom Gradient Dissolve */}
             <div className="relative w-full max-w-[440px] 2xl:max-w-[540px] flex justify-center items-end">
               <img
-                src={personal.portraitImage || '/sahadat-portrait-full.png'}
+                src={withBase(personal.portraitImage || '/sahadat-portrait-full.png')}
                 onError={(e) => {
-                  if (e.target.src !== '/myphoto-clean.png') {
-                    e.target.src = '/myphoto-clean.png';
+                  const fallback = withBase('/myphoto-clean.png');
+                  if ((e.target as HTMLImageElement).src !== fallback) {
+                    (e.target as HTMLImageElement).src = fallback;
                   }
                 }}
                 alt={personal.name || "Md Sahadat Hossain"}

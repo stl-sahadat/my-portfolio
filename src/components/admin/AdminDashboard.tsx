@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePortfolio } from '../../context/PortfolioContext';
+import { withBase } from '../../utils/assetUrl';
 import {
   Lock,
   Unlock,
@@ -1058,7 +1059,7 @@ export default function AdminDashboard() {
                         <div className="relative rounded-full p-[2px] bg-gradient-to-tr from-red-600 to-rose-500 shadow-[0_0_15px_rgba(220,38,38,0.6)] shrink-0">
                           <div className="w-14 h-14 rounded-full overflow-hidden bg-black flex items-center justify-center">
                             <img
-                              src={personalForm.avatarImage || '/sahadat-avatar.jpg'}
+                              src={withBase(personalForm.avatarImage || '/sahadat-avatar.jpg')}
                               alt="Avatar Preview"
                               className="w-full h-full object-cover"
                             />
@@ -1119,7 +1120,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-4 py-2">
                         <div className="w-14 h-16 rounded-xl overflow-hidden bg-black/80 border border-white/10 flex items-end justify-center shrink-0 relative">
                           <img
-                            src={personalForm.portraitImage || '/sahadat-portrait-full.png'}
+                            src={withBase(personalForm.portraitImage || '/sahadat-portrait-full.png')}
                             alt="Portrait Preview"
                             className="w-full h-full object-contain object-bottom"
                           />

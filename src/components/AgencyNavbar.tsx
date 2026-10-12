@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Home, User, Layers, Cpu, Briefcase, BookOpen, Mail, Menu, X, ArrowUpRight } from 'lucide-react';
 import { portfolioData } from '../data/portfolioData';
 import { usePortfolio } from '../context/PortfolioContext';
+import { withBase } from '../utils/assetUrl';
 
 // Brilliant Prismatic Crystal Diamond Gem Icon (Vibrant Cyan, Sapphire & Prismatic Fire)
 function Diamond3DIcon() {
@@ -156,8 +157,9 @@ export default function AgencyNavbar() {
 
         setActiveSection(current);
 
-        // REAL-TIME URL UPDATE IN ADDRESS BAR: Clean slashes only, NO # HASHTAGS
-        const targetUrl = current === 'home' ? '/' : `/${current}`;
+        // REAL-TIME URL UPDATE IN ADDRESS BAR: Clean slashes only, preserving base path
+        const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+        const targetUrl = current === 'home' ? (basePath ? `${basePath}/` : '/') : (basePath ? `${basePath}/${current}` : `/${current}`);
         if (window.location.pathname !== targetUrl && (!window.location.hash || window.location.hash !== '#admin')) {
           window.history.replaceState({ page: current }, '', targetUrl);
         }
@@ -176,7 +178,8 @@ export default function AgencyNavbar() {
   // Unified Handler: Smooth scroll to any section (including Contact) with clean URL
   const handleItemClick = (page: string) => {
     const targetElementId = page === 'projects' ? (document.getElementById('projects') ? 'projects' : 'websites') : page;
-    const targetUrl = page === 'home' ? '/' : `/${page}`;
+    const basePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    const targetUrl = page === 'home' ? (basePath ? `${basePath}/` : '/') : (basePath ? `${basePath}/${page}` : `/${page}`);
 
     // Push clean URL to browser address bar (NO # HASHTAGS)
     if (window.location.pathname !== targetUrl && (!window.location.hash || window.location.hash !== '#admin')) {
@@ -226,7 +229,7 @@ export default function AgencyNavbar() {
               <div className="relative rounded-full transition-transform duration-300 group-hover:scale-105 shadow-[0_0_18px_rgba(220,38,38,0.7)] p-[2px] bg-gradient-to-tr from-red-600 to-rose-500">
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-black flex items-center justify-center">
                   <img
-                    src={personal.avatarImage || '/sahadat-avatar.jpg'}
+                    src={withBase(personal.avatarImage || '/sahadat-avatar.jpg')}
                     alt={personal.name || portfolioData.personal.name}
                     className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-300"
                   />
