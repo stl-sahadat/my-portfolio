@@ -91,7 +91,7 @@ function ZeroGap3DShowcase({
   }, []);
 
   const total = projects.length || 1;
-  const numSlots = 5;
+  const numSlots = total >= 3 && total <= 8 ? total : Math.min(6, Math.max(3, total));
   const step = (Math.PI * 2) / numSlots;
 
   useEffect(() => {
@@ -196,7 +196,9 @@ function ZeroGap3DShowcase({
     }
   };
 
-  const slots = [0, 1, 2, 3, 4];
+  const slots = Array.from({ length: numSlots }, (_, i) => i);
+  const panelWidth = Math.round(2 * 275 * Math.tan(Math.PI / numSlots) + 2);
+  const panelLeft = -Math.round(panelWidth / 2);
   const fallbackGradients = [
     'linear-gradient(135deg, #1e1b4b 0%, #0284c7 40%, #f97316 100%)',
     'linear-gradient(135deg, #312e81 0%, #4c1d95 50%, #831843 100%)',
@@ -247,9 +249,9 @@ function ZeroGap3DShowcase({
             }}
           />
 
-          {/* 5 Physical Zero-Gap Panels */}
+          {/* Physical Zero-Gap Cylindrical Panels */}
           {slots.map((s) => {
-            const slotAngleDeg = s * 72;
+            const slotAngleDeg = s * (360 / numSlots);
             const projIdx = s % total;
             const proj = projects[projIdx] || projects[0] || {};
             const bgGradient = fallbackGradients[s % fallbackGradients.length];
@@ -260,9 +262,9 @@ function ZeroGap3DShowcase({
                 onClick={() => handleCardClick(proj)}
                 className="absolute overflow-hidden cursor-pointer"
                 style={{
-                  width: '404px',
+                  width: `${panelWidth}px`,
                   height: '250px',
-                  left: '-202px',
+                  left: `${panelLeft}px`,
                   top: '-125px',
                   transform: `rotateY(${slotAngleDeg}deg) translateZ(275px)`,
                   transformStyle: 'preserve-3d',
@@ -426,8 +428,8 @@ function CurvedCylinderWebGL({
     lastReportedIdxRef.current = activeIdx;
     if (projects.length === 0) return;
 
-    const total = projects.length;
-    const numSlots = 5;
+    const total = projects.length || 1;
+    const numSlots = total >= 3 && total <= 8 ? total : Math.min(6, Math.max(3, total));
     const step = (Math.PI * 2) / numSlots;
 
     const currentFront = Math.round(-currentAngleRef.current / step);
@@ -450,9 +452,9 @@ function CurvedCylinderWebGL({
       carouselGroup: THREE.Group,
       animationId: number;
     const cardMeshes: THREE.Mesh[] = [];
-    const total = projects.length;
+    const total = projects.length || 1;
 
-    const numSlots = 5;
+    const numSlots = total >= 3 && total <= 8 ? total : Math.min(6, Math.max(3, total));
     const radius = 2.75;
     const height = 1.55;
     const step = (Math.PI * 2) / numSlots;
@@ -817,6 +819,13 @@ function CurvedCylinderWebGL({
         }
       };
 
+      const handleContextLost = (e: Event) => {
+        e.preventDefault();
+        console.warn('WebGL context lost, switching to zero-gap fallback.');
+        onFallback?.();
+      };
+      dom.addEventListener('webglcontextlost', handleContextLost);
+
       dom.addEventListener('mousedown', handlePointerDown);
       window.addEventListener('mousemove', handlePointerMove);
       window.addEventListener('mouseup', handlePointerUp);
@@ -916,6 +925,7 @@ function CurvedCylinderWebGL({
         if (resizeObserver) resizeObserver.disconnect();
         cancelAnimationFrame(animationId);
         window.removeEventListener('resize', handleResize);
+        dom.removeEventListener('webglcontextlost', handleContextLost);
         dom.removeEventListener('mousedown', handlePointerDown);
         window.removeEventListener('mousemove', handlePointerMove);
         window.removeEventListener('mouseup', handlePointerUp);
