@@ -332,7 +332,15 @@ export default function SelectedProjects({
           {/* LEFT COLUMN: SHOWCASE (STACKED CAPSULES FOR AUTOMATIONS, FANNING FOR APPS, CYLINDER FOR WEBSITES) */}
           {/* ============================================================== */}
           <div className="lg:col-span-7 relative w-full flex items-center justify-center">
-            {activeCategory === 'automations' ? (
+            {activeCategory === 'apps' ? (
+              <FanningCardsShowcase
+                projects={projects}
+                activeIdx={activeIdx}
+                onActiveChange={handleActiveChange}
+                onPauseChange={(paused) => setIsPaused(paused)}
+                onProjectClick={null}
+              />
+            ) : activeCategory === 'automations' ? (
               <VerticalCurvedCardsShowcase
                 projects={projects}
                 activeIdx={activeIdx}
@@ -343,13 +351,18 @@ export default function SelectedProjects({
                 }}
               />
             ) : (
-              <FanningCardsShowcase
+              <CurvedCylinderShowcase
                 projects={projects}
-                categoryType={activeCategory}
                 activeIdx={activeIdx}
                 onActiveChange={handleActiveChange}
                 onPauseChange={(paused) => setIsPaused(paused)}
-                onProjectClick={null}
+                onProjectClick={(proj) => {
+                  if (proj && proj.demoUrl && proj.demoUrl !== 'https://github.com/stl-sahadat') {
+                    window.open(proj.demoUrl, '_blank', 'noopener,noreferrer');
+                  } else if (proj && proj.githubUrl) {
+                    window.open(proj.githubUrl, '_blank', 'noopener,noreferrer');
+                  }
+                }}
               />
             )}
           </div>

@@ -113,7 +113,6 @@ export default function FanningCardsShowcase({
   activeIdx = 0,
   onActiveChange,
   onPauseChange,
-  categoryType = 'websites',
 }) {
   const total = projects.length;
   const containerRef = useRef(null);
@@ -366,7 +365,7 @@ export default function FanningCardsShowcase({
             {/* Top Heading */}
             <div className="absolute inset-x-0 top-3 text-center">
               <span className="font-mono text-[9px] uppercase tracking-[0.3em] text-crimson/80 font-bold">
-                {categoryType === 'websites' ? '▲ INTERACTIVE WEB PLATFORMS' : '▲ ROTATING CIRCLE WHEEL'}
+                ▲ ROTATING CIRCLE WHEEL
               </span>
             </div>
             <div className="w-[280px] h-[280px] rounded-full border border-white/5" />
@@ -420,25 +419,16 @@ export default function FanningCardsShowcase({
                 {/* Top Badge: Pill like reference */}
                 <div className="absolute top-2.5 left-2.5">
                   <span className="px-2.5 py-1 rounded-full bg-black/85 border border-white/20 text-[9px] font-mono font-bold tracking-wider text-white">
-                    {proj.badge || (categoryType === 'websites' ? 'WEB PLATFORM' : 'APP')}
+                    {proj.badge || 'APP'}
                   </span>
                 </div>
-
-                {/* Browser Window Indicator Dots for Websites */}
-                {categoryType === 'websites' && (
-                  <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/80 border border-white/15 backdrop-blur-md">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500/90 shadow-[0_0_6px_#ef233c]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-500/90 shadow-[0_0_6px_#eab308]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/90 shadow-[0_0_6px_#10b981]" />
-                  </div>
-                )}
               </div>
 
               {/* Bottom Info: Editorial Typography */}
               <div className="px-1 space-y-1">
                 <div className="flex items-center justify-between gap-1">
                   <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-crimson truncate">
-                    {proj.category || (categoryType === 'websites' ? 'WEB PLATFORM' : 'APPLICATION')}
+                    {proj.category || 'APPLICATION'}
                   </span>
                   <span className="text-[10px] font-mono text-zinc-500 font-bold">
                     #{String(idx + 1).padStart(2, '0')}
@@ -456,9 +446,9 @@ export default function FanningCardsShowcase({
 
               {/* Bottom Subtle Bar */}
               <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between pt-2 border-t border-white/10 text-[9px] font-mono text-zinc-400 pointer-events-none">
-                <span>{categoryType === 'websites' ? 'LIVE WEB SYSTEM' : 'PRODUCTION APP'}</span>
+                <span>PRODUCTION APP</span>
                 <span className="text-zinc-500 font-mono text-[9px]">
-                  {categoryType === 'websites' ? 'RESPONSIVE PLATFORM' : 'CLOUD & AI SUITE'}
+                  CLOUD & AI SUITE
                 </span>
               </div>
             </div>
