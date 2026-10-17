@@ -96,14 +96,26 @@ export default function CurvedCylinderShowcase({
       camera.lookAt(0, 0.02, 0);
 
       // WebGL Renderer with Alpha & Antialiasing (1x on mobile to save GPU, up to 2x on desktop)
-      renderer = new THREE.WebGLRenderer({
-        alpha: true,
-        antialias: !isMobileDevice,
-        powerPreference: 'high-performance',
-      });
+      try {
+        renderer = new THREE.WebGLRenderer({
+          alpha: true,
+          antialias: !isMobileDevice,
+          powerPreference: 'default',
+          failIfMajorPerformanceCaveat: false,
+        });
+      } catch (e) {
+        renderer = new THREE.WebGLRenderer({
+          alpha: true,
+          antialias: false,
+          failIfMajorPerformanceCaveat: false,
+        });
+      }
       renderer.setPixelRatio(isMobileDevice ? 1 : Math.min(window.devicePixelRatio, 2));
       renderer.setSize(width, heightPx);
       renderer.setClearColor(0x000000, 0);
+
+      // Clean existing children to prevent ghost/stale canvases
+      mount.innerHTML = '';
       mount.appendChild(renderer.domElement);
 
       carouselGroup = new THREE.Group();
@@ -308,11 +320,11 @@ export default function CurvedCylinderShowcase({
           arcLength
         );
 
-        // FrontSide ensures that when the card goes to the back, it naturally vanishes!
+        // DoubleSide ensures that panels are visible regardless of normal orientation
         const panelMat = new THREE.MeshBasicMaterial({
           map: textures[initialProjIdx].texture,
           transparent: true,
-          side: THREE.FrontSide,
+          side: THREE.DoubleSide,
         });
 
         const panelMesh = new THREE.Mesh(panelGeom, panelMat);
