@@ -466,31 +466,12 @@ export default function CurvedCylinderShowcase({
       // 6. Smooth 60fps Animation Loop (Active, Responsive & Continuous)
       // ============================================================
       let lastTime = performance.now();
-      let isVisible = true;
-      let observer: IntersectionObserver | null = null;
-
-      if (typeof IntersectionObserver !== 'undefined' && mount) {
-        observer = new IntersectionObserver(
-          (entries) => {
-            const entry = entries[0];
-            isVisible = entry ? entry.isIntersecting : true;
-            if (isVisible) {
-              renderer.render(scene, camera);
-            }
-          },
-          { threshold: 0.001, rootMargin: '300px' }
-        );
-        observer.observe(mount);
-      }
 
       // Immediate first-frame render so cylinder is NEVER blank!
       renderer.render(scene, camera);
 
       const animate = (now: number) => {
         animationId = requestAnimationFrame(animate);
-
-        // Offscreen throttling: sleep computation when scrolled away to save 100% GPU
-        if (!isVisible) return;
 
         const delta = Math.min((now - lastTime) / 1000, 0.05);
         lastTime = now;
@@ -555,7 +536,6 @@ export default function CurvedCylinderShowcase({
       // Cleanup on unmount
       return () => {
         if (resizeObserver) resizeObserver.disconnect();
-        if (observer) observer.disconnect();
         cancelAnimationFrame(animationId);
         window.removeEventListener('resize', handleResize);
         dom.removeEventListener('mousedown', handlePointerDown);

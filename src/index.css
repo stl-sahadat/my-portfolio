@@ -497,25 +497,6 @@ html.light #skills text[filter*="svgGreenGlow"] {
    Eliminates lag while keeping 100% of the visual 3D design and animations intact
    ========================================================================== */
 
-/* 1. Off-screen layout skipping: skips layout/paint until scrolled into view */
-#about,
-#skills,
-#experience,
-#blog,
-#contact,
-footer {
-  content-visibility: auto;
-  contain-intrinsic-size: 1px 900px;
-}
-
-/* 2. Hardware acceleration layers for 3D canvas and animated containers */
-canvas {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
 /* 3. Mobile GPU fill-rate protection: clamp oversized blurs on mobile screens
       to prevent compositor frame drops while keeping full glowing aesthetic */
 @media (max-width: 768px) {
