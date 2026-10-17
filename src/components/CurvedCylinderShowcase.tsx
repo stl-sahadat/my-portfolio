@@ -706,12 +706,23 @@ function Css3DCurvedCylinderShowcase({
       onPointerCancel={handlePointerUp}
       className="w-full h-[350px] sm:h-[400px] md:h-[440px] flex items-center justify-center relative cursor-grab active:cursor-grabbing select-none overflow-hidden"
       style={{ perspective: '1100px', perspectiveOrigin: '50% 50%' }}
-      title="Drag or swipe to rotate the curved 3D glass cup"
+      title="Drag or swipe to rotate the curved 3D glass cylinder"
     >
       {/* Central dark obsidian cylinder core */}
-      <div className="absolute w-44 h-52 rounded-full bg-gradient-to-b from-[#0a0a14] via-[#050508] to-[#0a0a14] border border-white/5 shadow-[0_0_60px_rgba(239,35,60,0.15)] pointer-events-none" />
+      <div 
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          width: '360px',
+          height: '240px',
+          background: 'radial-gradient(ellipse at center, #050508 0%, #030305 70%, transparent 100%)',
+          boxShadow: '0 0 80px rgba(239, 35, 60, 0.12), inset 0 0 40px rgba(0, 0, 0, 0.95)',
+        }}
+      />
 
-      {/* 3D Rotating Cylinder Wheel */}
+      {/* Ambient Red Glow Halo beneath cylinder */}
+      <div className="absolute w-72 h-48 rounded-full bg-red-600/10 blur-3xl pointer-events-none" />
+
+      {/* 3D Rotating Cylinder Wheel (Zero Gap Seamless Arc) */}
       <div
         ref={carouselRef}
         className="relative w-0 h-0"
@@ -726,6 +737,10 @@ function Css3DCurvedCylinderShowcase({
           if (!proj) return null;
           const slotAngle = slotIdx * stepDeg;
 
+          // Exact zero-gap regular pentagonal cylinder math:
+          // R = 340px, theta = 72deg
+          // Apothem = R * cos(36deg) = 275.1px
+          // Width = 2 * R * sin(36deg) = 399.7px (~404px with 2px overlap to guarantee zero sub-pixel seam gap)
           return (
             <div
               key={slotIdx}
@@ -735,20 +750,20 @@ function Css3DCurvedCylinderShowcase({
                   else if (proj.demoUrl) window.open(proj.demoUrl, '_blank', 'noopener,noreferrer');
                 }
               }}
-              className="absolute cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+              className="absolute cursor-pointer transition-transform duration-200"
               style={{
-                width: '320px',
-                height: '200px',
-                left: '-160px',
-                top: '-100px',
-                transform: `rotateY(${slotAngle}deg) translateZ(280px)`,
+                width: '404px',
+                height: '248px',
+                left: '-202px',
+                top: '-124px',
+                transform: `rotateY(${slotAngle}deg) translateZ(275px)`,
                 transformStyle: 'preserve-3d',
-                backfaceVisibility: 'visible',
+                backfaceVisibility: 'hidden',
               }}
             >
-              {/* Glass Panel Frame */}
-              <div className="relative w-full h-full rounded-2xl overflow-hidden border border-white/20 bg-[#0a0a14] shadow-[0_12px_40px_rgba(0,0,0,0.85)]">
-                {/* Background Image / Gradient */}
+              {/* Seamless Curved Glass Panel (Zero Side Margins / Zero Gaps) */}
+              <div className="relative w-full h-full overflow-hidden bg-[#0a0a14] shadow-[0_15px_45px_rgba(0,0,0,0.9)] border-t border-b border-white/20">
+                {/* Background Screenshot Image / Gradient */}
                 {proj.image ? (
                   <img
                     src={proj.image}
@@ -760,32 +775,32 @@ function Css3DCurvedCylinderShowcase({
                   <div className="absolute inset-0 bg-gradient-to-br from-[#1a0508] via-[#0d0d1a] to-[#050508]" />
                 )}
 
-                {/* Glass Vignette */}
-                <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-black/20 via-black/70 to-black/95 pointer-events-none" />
+                {/* Dark Cinematic Glass Vignette */}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 via-black/65 to-black/95 pointer-events-none" />
 
-                {/* Vertical Seam Glass Dividers */}
-                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-red-500/50 via-white/30 to-red-500/50" />
-                <div className="absolute right-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-red-500/50 via-white/30 to-red-500/50" />
+                {/* Vertical Seam Glass Dividers - Directly on Left and Right Edges */}
+                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-red-500/60 via-white/40 to-red-500/60 z-20 pointer-events-none" />
+                <div className="absolute right-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-red-500/60 via-white/40 to-red-500/60 z-20 pointer-events-none" />
 
                 {/* Top Badge */}
-                <div className="absolute top-3 left-3 px-3 py-1 rounded-md bg-black/85 border border-white/30 text-[10px] font-mono font-bold tracking-wider text-white uppercase shadow-sm">
+                <div className="absolute top-3 left-4 px-2.5 py-1 rounded-md bg-black/85 border border-white/30 text-[9px] font-mono font-bold tracking-wider text-white uppercase shadow-md z-10">
                   {proj.badge || 'PRODUCTION'}
                 </div>
 
-                {/* Bottom Bar: Title & Category */}
-                <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
-                  <div className="min-w-0">
-                    <h3 className="font-bebas text-2xl text-white tracking-wide truncate drop-shadow-md">
+                {/* Bottom Bar: Title, Category & Live Pill */}
+                <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-2 z-10">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bebas text-2xl sm:text-3xl text-white tracking-wide uppercase drop-shadow-lg leading-tight">
                       {proj.title}
                     </h3>
-                    <p className="font-mono text-[10px] font-bold text-red-400 tracking-wider uppercase truncate">
+                    <p className="font-mono text-[10px] sm:text-[11px] font-bold text-red-400 tracking-wider uppercase truncate mt-0.5">
                       {proj.category || 'AI SOFTWARE & ARCHITECTURE'}
                     </p>
                   </div>
 
-                  {/* LIVE Pill */}
-                  <div className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#07070e]/90 border border-red-500/60 shadow-[0_0_12px_rgba(239,35,60,0.35)]">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  {/* LIVE Action Pill */}
+                  <div className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#07070e]/95 border border-red-500/80 shadow-[0_0_14px_rgba(239,35,60,0.4)]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                     <span className="font-mono text-[10px] font-bold text-white tracking-wider">LIVE ↗</span>
                   </div>
                 </div>
