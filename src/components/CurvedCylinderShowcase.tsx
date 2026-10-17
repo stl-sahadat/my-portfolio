@@ -478,7 +478,7 @@ export default function CurvedCylinderShowcase({
               renderer.render(scene, camera);
             }
           },
-          { threshold: 0.01 }
+          { threshold: 0.001, rootMargin: '300px' }
         );
         observer.observe(mount);
       }
