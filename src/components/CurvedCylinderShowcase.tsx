@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
 interface CurvedCylinderShowcaseProps {
@@ -10,21 +10,390 @@ interface CurvedCylinderShowcaseProps {
 }
 
 /**
- * CurvedCylinderShowcase:
- * 100% Authentic Round ("গোল") 3D Curved Glass Cylinder Showcase.
- * Built using Three.js CylinderGeometry with 32 radial segments per panel,
- * producing a physically round, seamlessly curved cylindrical vessel wall.
- * Zero gap between adjacent panels - cards touch edge-to-edge.
- * Features Bebas Neue typography, red monospace category, top badge pill,
- * glowing LIVE pill, and dark obsidian central core.
+ * Checks whether WebGL is supported and can create a valid rendering context.
  */
-export default function CurvedCylinderShowcase({
+function isWebGLSupported(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    const gl =
+      canvas.getContext('webgl2') ||
+      canvas.getContext('webgl') ||
+      canvas.getContext('experimental-webgl');
+    return Boolean(gl);
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * ZeroGap3DShowcase:
+ * Bulletproof CSS 3D fallback for browsers/PCs where WebGL is disabled or GPU crashed.
+ * Cards touch edge-to-edge with ZERO GAP, featuring cylindrical perspective,
+ * Bebas Neue typography, red monospace category, and glowing LIVE button.
+ */
+function ZeroGap3DShowcase({
   projects = [],
   activeIdx = 0,
   onActiveChange,
   onProjectClick,
   onPauseChange,
 }: CurvedCylinderShowcaseProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cylinderRef = useRef<HTMLDivElement>(null);
+
+  const currentAngleRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartAngleRef = useRef(0);
+  const dragDistanceRef = useRef(0);
+  const wheelVelocityRef = useRef(0);
+
+  const activeIdxRef = useRef(activeIdx);
+  const lastReportedIdxRef = useRef(activeIdx);
+  const onActiveChangeRef = useRef(onActiveChange);
+  const onPauseChangeRef = useRef(onPauseChange);
+
+  const isSnappingRef = useRef(false);
+  const snapTargetAngleRef = useRef(0);
+
+  const [scale, setScale] = useState(1);
+  const scaleRef = useRef(scale);
+
+  useEffect(() => {
+    activeIdxRef.current = activeIdx;
+  }, [activeIdx]);
+
+  useEffect(() => {
+    onActiveChangeRef.current = onActiveChange;
+  }, [onActiveChange]);
+
+  useEffect(() => {
+    onPauseChangeRef.current = onPauseChange;
+  }, [onPauseChange]);
+
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      if (w < 440) setScale(0.70);
+      else if (w < 640) setScale(0.80);
+      else if (w < 768) setScale(0.88);
+      else if (w < 1024) setScale(0.95);
+      else setScale(1.0);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const total = projects.length || 1;
+  const numSlots = 5;
+  const step = (Math.PI * 2) / numSlots;
+
+  useEffect(() => {
+    if (activeIdx === lastReportedIdxRef.current) return;
+    lastReportedIdxRef.current = activeIdx;
+    if (projects.length === 0) return;
+
+    const currentFront = Math.round(-currentAngleRef.current / step);
+    const currentFrontIdx = ((currentFront % total) + total) % total;
+    let diff = activeIdx - currentFrontIdx;
+    if (diff > total / 2) diff -= total;
+    if (diff < -total / 2) diff += total;
+
+    snapTargetAngleRef.current = currentAngleRef.current - diff * step;
+    isSnappingRef.current = true;
+  }, [activeIdx, total, step, projects.length]);
+
+  useEffect(() => {
+    let animationId: number;
+    let lastTime = performance.now();
+
+    const animate = (now: number) => {
+      animationId = requestAnimationFrame(animate);
+      const delta = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      if (isSnappingRef.current) {
+        const diff = snapTargetAngleRef.current - currentAngleRef.current;
+        if (Math.abs(diff) < 0.004) {
+          currentAngleRef.current = snapTargetAngleRef.current;
+          isSnappingRef.current = false;
+        } else {
+          currentAngleRef.current += diff * 0.14;
+        }
+      } else if (!isDraggingRef.current) {
+        const baseSpeed = 0.165;
+        currentAngleRef.current += (-baseSpeed + wheelVelocityRef.current) * delta;
+        wheelVelocityRef.current *= 0.94;
+        if (Math.abs(wheelVelocityRef.current) < 0.001) wheelVelocityRef.current = 0;
+      }
+
+      if (cylinderRef.current) {
+        cylinderRef.current.style.transform = `scale(${scaleRef.current}) rotateX(-3.5deg) rotateY(${currentAngleRef.current}rad)`;
+      }
+
+      const stepProgress = -currentAngleRef.current / step;
+      const frontIdx = ((Math.round(stepProgress) % total) + total) % total;
+      if (frontIdx !== activeIdxRef.current) {
+        activeIdxRef.current = frontIdx;
+        lastReportedIdxRef.current = frontIdx;
+        onActiveChangeRef.current?.(frontIdx);
+      }
+    };
+
+    animationId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationId);
+  }, [step, total]);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.clientX;
+    dragStartAngleRef.current = currentAngleRef.current;
+    dragDistanceRef.current = 0;
+    isSnappingRef.current = false;
+    wheelVelocityRef.current = 0;
+    onPauseChangeRef.current?.(true);
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    const deltaX = e.clientX - dragStartXRef.current;
+    dragDistanceRef.current = Math.abs(deltaX);
+    currentAngleRef.current = dragStartAngleRef.current + deltaX * 0.0075;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    onPauseChangeRef.current?.(false);
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    isSnappingRef.current = false;
+    const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    if (Math.abs(delta) < 0.2) return;
+    wheelVelocityRef.current -= delta * 0.0028;
+    wheelVelocityRef.current = Math.max(-2.5, Math.min(2.5, wheelVelocityRef.current));
+  };
+
+  const handleCardClick = (proj: any) => {
+    if (dragDistanceRef.current > 6) return;
+    if (onProjectClick) {
+      onProjectClick(proj);
+    } else if (proj?.demoUrl && proj.demoUrl !== 'https://github.com/stl-sahadat') {
+      window.open(proj.demoUrl, '_blank', 'noopener,noreferrer');
+    } else if (proj?.githubUrl) {
+      window.open(proj.githubUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const slots = [0, 1, 2, 3, 4];
+  const fallbackGradients = [
+    'linear-gradient(135deg, #1e1b4b 0%, #0284c7 40%, #f97316 100%)',
+    'linear-gradient(135deg, #312e81 0%, #4c1d95 50%, #831843 100%)',
+    'linear-gradient(135deg, #1e293b 0%, #0f172a 60%, #020617 100%)',
+    'linear-gradient(135deg, #1c1917 0%, #292524 50%, #44403c 100%)',
+    'linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #3b0764 100%)',
+  ];
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full h-[350px] sm:h-[400px] md:h-[440px] flex items-center justify-center relative select-none cursor-grab active:cursor-grabbing overflow-visible"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onWheel={handleWheel}
+      title="Drag or swipe to rotate the 3D showcase"
+    >
+      <div
+        className="relative w-full max-w-[620px] h-[340px] flex items-center justify-center overflow-visible"
+        style={{
+          perspective: '1100px',
+          perspectiveOrigin: '50% 50%',
+          maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)',
+        }}
+      >
+        <div
+          ref={cylinderRef}
+          className="absolute w-0 h-0"
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: `scale(${scale}) rotateX(-3.5deg) rotateY(0rad)`,
+          }}
+        >
+          {/* Central Obsidian Core */}
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: '380px',
+              height: '380px',
+              left: '-190px',
+              top: '-190px',
+              transform: 'rotateX(90deg)',
+              background: 'radial-gradient(circle at center, #0a0a14 0%, #030306 85%)',
+              boxShadow: '0 0 60px rgba(0,0,0,0.95)',
+            }}
+          />
+
+          {/* 5 Physical Zero-Gap Panels */}
+          {slots.map((s) => {
+            const slotAngleDeg = s * 72;
+            const projIdx = s % total;
+            const proj = projects[projIdx] || projects[0] || {};
+            const bgGradient = fallbackGradients[s % fallbackGradients.length];
+
+            return (
+              <div
+                key={`slot-${s}`}
+                onClick={() => handleCardClick(proj)}
+                className="absolute overflow-hidden cursor-pointer"
+                style={{
+                  width: '404px',
+                  height: '250px',
+                  left: '-202px',
+                  top: '-125px',
+                  transform: `rotateY(${slotAngleDeg}deg) translateZ(275px)`,
+                  transformStyle: 'preserve-3d',
+                  backfaceVisibility: 'hidden',
+                  background: '#090912',
+                  borderRight: '1.5px solid rgba(255,255,255,0.22)',
+                  borderLeft: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.25), inset 0 -1.5px 0 rgba(239,68,68,0.3)',
+                }}
+              >
+                {proj.image ? (
+                  <img
+                    src={proj.image}
+                    alt={proj.title || 'Project'}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="eager"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0" style={{ background: bgGradient }} />
+                )}
+
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, rgba(5,5,10,0.10) 0%, rgba(5,5,10,0.30) 40%, rgba(5,5,10,0.88) 80%, #050508 100%)',
+                  }}
+                />
+
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      'linear-gradient(90deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 22%, transparent 50%, rgba(0,0,0,0.1) 80%, rgba(0,0,0,0.45) 100%)',
+                  }}
+                />
+
+                <div className="absolute top-4 right-4 px-2.5 py-0.5 rounded-full bg-black/85 border border-white/28 text-[10px] font-mono font-bold tracking-widest text-zinc-200 uppercase backdrop-blur-md shadow-md pointer-events-none">
+                  {proj.badge || proj.category || 'FEATURED'}
+                </div>
+
+                <div className="absolute bottom-3.5 left-5 right-28 pointer-events-none">
+                  <div
+                    className="uppercase tracking-wider text-white drop-shadow-md leading-none truncate"
+                    style={{
+                      fontFamily: '"Bebas Neue", "Impact", "Arial Black", sans-serif',
+                      fontSize: '28px',
+                      letterSpacing: '0.05em',
+                      textShadow: '0 2px 10px rgba(0,0,0,0.85)',
+                    }}
+                  >
+                    {proj.title}
+                  </div>
+                  <div
+                    className="font-bold tracking-widest text-red-500 uppercase mt-0.5 drop-shadow truncate"
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '10px',
+                      letterSpacing: '0.12em',
+                      textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                    }}
+                  >
+                    {proj.tagline || proj.category || 'WEB PLATFORM'}
+                  </div>
+                </div>
+
+                <div className="absolute bottom-3.5 right-4 px-3 py-1 rounded-full bg-black/90 border border-red-500/85 shadow-[0_0_12px_rgba(239,68,68,0.45)] flex items-center gap-1.5 text-[11px] font-bold text-white tracking-wider pointer-events-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_#ef4444]" />
+                  <span>LIVE ↗</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Curved Glass Rims */}
+        <div
+          className="absolute top-8 left-6 right-6 h-6 rounded-[50%] pointer-events-none"
+          style={{
+            borderTop: '1.5px solid rgba(255,255,255,0.22)',
+            boxShadow: '0 -2px 12px rgba(255,255,255,0.06)',
+          }}
+        />
+        <div
+          className="absolute bottom-8 left-6 right-6 h-6 rounded-[50%] pointer-events-none"
+          style={{
+            borderBottom: '1.5px solid rgba(239,68,68,0.25)',
+            boxShadow: '0 2px 14px rgba(239,68,68,0.12)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Main CurvedCylinderShowcase:
+ * Tries Three.js WebGL for the authentic 100% round ("গোল") curved cylinder.
+ * If WebGL is unavailable or fails context creation, seamlessly renders ZeroGap3DShowcase
+ * so that PC browsers NEVER see a blank void!
+ */
+export default function CurvedCylinderShowcase(props: CurvedCylinderShowcaseProps) {
+  const [useFallback, setUseFallback] = useState(false);
+
+  useEffect(() => {
+    if (!isWebGLSupported()) {
+      setUseFallback(true);
+    }
+  }, []);
+
+  if (useFallback) {
+    return <ZeroGap3DShowcase {...props} />;
+  }
+
+  return <CurvedCylinderWebGL {...props} onFallback={() => setUseFallback(true)} />;
+}
+
+/**
+ * Authentic Three.js 3D Curved Glass Cylinder (32 Radial Segments - 100% Round)
+ */
+function CurvedCylinderWebGL({
+  projects = [],
+  activeIdx = 0,
+  onActiveChange,
+  onProjectClick,
+  onPauseChange,
+  onFallback,
+}: CurvedCylinderShowcaseProps & { onFallback?: () => void }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const currentAngleRef = useRef(0);
   const isInteractingRef = useRef(false);
@@ -52,7 +421,6 @@ export default function CurvedCylinderShowcase({
     onActiveChangeRef.current = onActiveChange;
   }, [onActiveChange]);
 
-  // Rotate to specific index when activeIdx is changed externally (e.g. 01, 02 buttons)
   useEffect(() => {
     if (activeIdx === lastReportedIdxRef.current) return;
     lastReportedIdxRef.current = activeIdx;
@@ -84,13 +452,11 @@ export default function CurvedCylinderShowcase({
     const cardMeshes: THREE.Mesh[] = [];
     const total = projects.length;
 
-    // True Curved Glass Cup Geometry:
-    // Fixed 5 physical slots with radius 2.75 produces the round ("গোল") proportion
     const numSlots = 5;
     const radius = 2.75;
     const height = 1.55;
-    const step = (Math.PI * 2) / numSlots; // 72 degrees = ~1.2566 rad
-    const arcLength = step; // Exactly 100% arc - touching edge-to-edge with ZERO GAP
+    const step = (Math.PI * 2) / numSlots;
+    const arcLength = step;
 
     try {
       scene = new THREE.Scene();
@@ -99,12 +465,10 @@ export default function CurvedCylinderShowcase({
       const width = mount.clientWidth || 600;
       const heightPx = mount.clientHeight || 420;
 
-      // Perspective Camera: perfectly framed clearance
       camera = new THREE.PerspectiveCamera(46, width / heightPx, 0.1, 100);
       camera.position.set(0, 0.02, 5.2);
       camera.lookAt(0, 0.02, 0);
 
-      // WebGL Renderer with Alpha & Antialiasing
       try {
         renderer = new THREE.WebGLRenderer({
           alpha: true,
@@ -112,10 +476,16 @@ export default function CurvedCylinderShowcase({
           powerPreference: 'default',
         });
       } catch (e) {
-        renderer = new THREE.WebGLRenderer({
-          alpha: true,
-          antialias: false,
-        });
+        try {
+          renderer = new THREE.WebGLRenderer({
+            alpha: true,
+            antialias: false,
+          });
+        } catch (e2) {
+          console.warn('WebGL completely unavailable, activating fallback.');
+          onFallback?.();
+          return;
+        }
       }
 
       renderer.setPixelRatio(isMobileDevice ? 1 : Math.min(window.devicePixelRatio || 1, 2));
@@ -132,13 +502,10 @@ export default function CurvedCylinderShowcase({
       mount.appendChild(dom);
 
       carouselGroup = new THREE.Group();
-      // Natural 3D tilt without pushing the top beyond the viewport
       carouselGroup.rotation.x = -0.035;
       scene.add(carouselGroup);
 
-      // ============================================================
-      // 1. Central Dark Obsidian Core
-      // ============================================================
+      // Central obsidian core
       const coreRadius = radius * 0.58;
       const coreGeom = new THREE.CylinderGeometry(
         coreRadius,
@@ -157,9 +524,7 @@ export default function CurvedCylinderShowcase({
       coreMesh.position.y = 0;
       carouselGroup.add(coreMesh);
 
-      // ============================================================
-      // 2. High-DPI Dynamic 2D Canvas Textures
-      // ============================================================
+      // Textures and panels
       const textures: any[] = [];
       const texWidth = isMobileDevice ? 512 : 1024;
       const texHeight = isMobileDevice ? 320 : 640;
@@ -185,11 +550,9 @@ export default function CurvedCylinderShowcase({
           }
           ctx.clearRect(0, 0, 1024, 640);
 
-          // Card Background
           ctx.fillStyle = '#0a0a14';
           ctx.fillRect(0, 0, 1024, 640);
 
-          // Project Image Screenshot or Cyber Fallback Gradient
           if (img) {
             try {
               ctx.drawImage(img, 0, 0, 1024, 640);
@@ -210,7 +573,6 @@ export default function CurvedCylinderShowcase({
             ctx.fillRect(0, 0, 1024, 640);
           }
 
-          // Vertical Dark Glass Vignette Gradient
           const vGrad = ctx.createLinearGradient(0, 0, 0, 640);
           vGrad.addColorStop(0, 'rgba(5, 5, 8, 0.20)');
           vGrad.addColorStop(0.4, 'rgba(5, 5, 8, 0.40)');
@@ -219,7 +581,6 @@ export default function CurvedCylinderShowcase({
           ctx.fillStyle = vGrad;
           ctx.fillRect(0, 0, 1024, 640);
 
-          // Horizontal Cylindrical Glass Fresnel Reflection
           const hGrad = ctx.createLinearGradient(0, 0, 1024, 0);
           hGrad.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
           hGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.02)');
@@ -229,7 +590,6 @@ export default function CurvedCylinderShowcase({
           ctx.fillStyle = hGrad;
           ctx.fillRect(0, 0, 1024, 640);
 
-          // Sleek Glass Seam Borders
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
           ctx.lineWidth = 2.5;
           ctx.beginPath();
@@ -258,7 +618,6 @@ export default function CurvedCylinderShowcase({
           ctx.lineTo(1024, 639);
           ctx.stroke();
 
-          // Top Badge Pill
           const badgeText = (proj.badge || proj.category || 'FEATURED').toUpperCase();
           ctx.font = 'bold 20px monospace';
           const badgeMetrics = ctx.measureText(badgeText);
@@ -280,7 +639,6 @@ export default function CurvedCylinderShowcase({
           ctx.font = 'bold 18px monospace';
           ctx.fillText(badgeText, badgeX + 18, badgeY + 24);
 
-          // Big Bold Title in Bebas Neue font
           const title = (proj.title || 'UNTITLED PROJECT').toUpperCase();
           ctx.fillStyle = '#ffffff';
           ctx.font = '900 52px "Bebas Neue", "Impact", "Arial Black", sans-serif';
@@ -301,7 +659,6 @@ export default function CurvedCylinderShowcase({
           ctx.shadowColor = 'transparent';
           ctx.shadowBlur = 0;
 
-          // Red Monospace Category Subtitle
           const tagline = (proj.tagline || proj.category || 'WEB APPLICATION').toUpperCase();
           ctx.fillStyle = '#ef233c';
           ctx.font = 'bold 22px monospace';
@@ -314,7 +671,6 @@ export default function CurvedCylinderShowcase({
           }
           ctx.fillText(displayTagline, 48, 588);
 
-          // Glowing Red LIVE Pill Button
           const liveText = 'LIVE ↗';
           const pillWidth = 142;
           const pillHeight = 44;
@@ -338,7 +694,6 @@ export default function CurvedCylinderShowcase({
           ctx.shadowColor = 'transparent';
           ctx.shadowBlur = 0;
 
-          // Glowing dot
           const dotX = pillX + pillPadX + dotRadius;
           const dotY = pillY + pillHeight / 2;
           ctx.fillStyle = '#ef233c';
@@ -346,7 +701,6 @@ export default function CurvedCylinderShowcase({
           ctx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2);
           ctx.fill();
 
-          // Button label
           ctx.fillStyle = '#ffffff';
           ctx.font = 'bold 20px monospace';
           ctx.fillText(liveText, dotX + dotRadius + dotGap, pillY + 28);
@@ -365,13 +719,9 @@ export default function CurvedCylinderShowcase({
         }
       });
 
-      // ============================================================
-      // 3. True Round ("গোল") Curved Cylinder Geometry (32 Radial Segments)
-      // ============================================================
       for (let s = 0; s < numSlots; s++) {
         const initialProjIdx = s % total;
         const thetaStart = s * step - arcLength / 2;
-        // 32 radial segments along each 72deg arc gives a 100% round ("গোল") curved cylinder
         const panelGeom = new THREE.CylinderGeometry(
           radius,
           radius,
@@ -399,9 +749,6 @@ export default function CurvedCylinderShowcase({
         carouselGroup.add(panelMesh);
       }
 
-      // ============================================================
-      // 4. Raycasting & Interactive Handlers (Drag, Swipe, Wheel, Click)
-      // ============================================================
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
@@ -481,9 +828,6 @@ export default function CurvedCylinderShowcase({
       window.addEventListener('touchmove', handlePointerMove, { passive: true });
       window.addEventListener('touchend', handlePointerUp);
 
-      // ============================================================
-      // 5. Responsive Resize Observer
-      // ============================================================
       const handleResize = () => {
         if (!mount) return;
         const newWidth = mount.clientWidth || 600;
@@ -512,11 +856,7 @@ export default function CurvedCylinderShowcase({
         resizeObserver.observe(mount);
       }
 
-      // ============================================================
-      // 6. Smooth 60fps Animation Loop (Active & Continuous)
-      // ============================================================
       let lastTime = performance.now();
-      // Immediate first-frame render
       renderer.render(scene, camera);
 
       const animate = (now: number) => {
@@ -541,7 +881,6 @@ export default function CurvedCylinderShowcase({
 
         carouselGroup.rotation.y = currentAngleRef.current;
 
-        // Texture streaming as slots rotate through the back
         if (total > numSlots) {
           for (let s = 0; s < numSlots; s++) {
             const slotWorldAngle = currentAngleRef.current + s * step;
@@ -560,7 +899,6 @@ export default function CurvedCylinderShowcase({
           }
         }
 
-        // Detect front card and sync activeIdx
         const stepProgress = -currentAngleRef.current / step;
         const frontIdx = ((Math.round(stepProgress) % total) + total) % total;
         if (frontIdx !== activeIdxRef.current) {
@@ -574,7 +912,6 @@ export default function CurvedCylinderShowcase({
 
       animationId = requestAnimationFrame(animate);
 
-      // Cleanup
       return () => {
         if (resizeObserver) resizeObserver.disconnect();
         cancelAnimationFrame(animationId);
@@ -592,7 +929,8 @@ export default function CurvedCylinderShowcase({
         renderer.dispose();
       };
     } catch (err) {
-      console.error('Three.js WebGL error:', err);
+      console.warn('Three.js initialization failed, switching to zero-gap fallback:', err);
+      onFallback?.();
     }
   }, [projects]);
 
@@ -600,7 +938,7 @@ export default function CurvedCylinderShowcase({
     <div
       ref={mountRef}
       className="w-full h-[350px] sm:h-[400px] md:h-[440px] flex items-center justify-center relative cursor-grab active:cursor-grabbing select-none overflow-visible"
-      title="Drag or swipe to rotate the curved 3D glass cylinder"
+      title="Drag or swipe to rotate the curved 3D glass cup"
     />
   );
 }
