@@ -48,6 +48,7 @@ function ZeroGap3DShowcase({
   const dragStartAngleRef = useRef(0);
   const dragDistanceRef = useRef(0);
   const wheelVelocityRef = useRef(0);
+  const isHoveredRef = useRef(false);
 
   const activeIdxRef = useRef(activeIdx);
   const lastReportedIdxRef = useRef(activeIdx);
@@ -126,9 +127,13 @@ function ZeroGap3DShowcase({
         } else {
           currentAngleRef.current += diff * 0.14;
         }
-      } else if (!isDraggingRef.current) {
+      } else if (!isDraggingRef.current && !isHoveredRef.current) {
         const baseSpeed = 0.165;
         currentAngleRef.current += (-baseSpeed + wheelVelocityRef.current) * delta;
+        wheelVelocityRef.current *= 0.94;
+        if (Math.abs(wheelVelocityRef.current) < 0.001) wheelVelocityRef.current = 0;
+      } else if (!isDraggingRef.current && isHoveredRef.current) {
+        currentAngleRef.current += wheelVelocityRef.current * delta;
         wheelVelocityRef.current *= 0.94;
         if (Math.abs(wheelVelocityRef.current) < 0.001) wheelVelocityRef.current = 0;
       }
@@ -215,6 +220,14 @@ function ZeroGap3DShowcase({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
+      onPointerEnter={() => {
+        isHoveredRef.current = true;
+        onPauseChangeRef.current?.(true);
+      }}
+      onPointerLeave={(e) => {
+        isHoveredRef.current = false;
+        handlePointerUp(e);
+      }}
       onWheel={handleWheel}
       title="Drag or swipe to rotate the 3D showcase"
     >
@@ -370,7 +383,7 @@ function ZeroGap3DShowcase({
  * so that PC browsers NEVER see a blank void!
  */
 export default function CurvedCylinderShowcase(props: CurvedCylinderShowcaseProps) {
-  const [useFallback, setUseFallback] = useState(false);
+  const [useFallback, setUseFallback] = useState(() => !isWebGLSupported());
 
   useEffect(() => {
     if (!isWebGLSupported()) {
@@ -402,6 +415,7 @@ function CurvedCylinderWebGL({
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragStartAngleRef = useRef(0);
+  const dragDistanceRef = useRef(0);
   const activeIdxRef = useRef(activeIdx);
   const onActiveChangeRef = useRef(onActiveChange);
   const onPauseChangeRef = useRef(onPauseChange);
@@ -771,6 +785,7 @@ function CurvedCylinderWebGL({
         isInteractingRef.current = true;
         dragStartXRef.current = e.clientX || e.touches?.[0]?.clientX || 0;
         dragStartAngleRef.current = currentAngleRef.current;
+        dragDistanceRef.current = 0;
         onPauseChangeRef.current?.(true);
       };
 
@@ -779,6 +794,7 @@ function CurvedCylinderWebGL({
         if (isDraggingRef.current) {
           const clientX = e.clientX || e.touches?.[0]?.clientX || 0;
           const deltaX = clientX - dragStartXRef.current;
+          dragDistanceRef.current = Math.abs(deltaX);
           currentAngleRef.current = dragStartAngleRef.current + deltaX * 0.018;
         } else {
           raycaster.setFromCamera(mouse, camera);
@@ -803,6 +819,7 @@ function CurvedCylinderWebGL({
       };
 
       const handleClick = (e: any) => {
+        if (dragDistanceRef.current > 8) return;
         getNormalizedMouse(e);
         raycaster.setFromCamera(mouse, camera);
         const intersects = raycaster.intersectObjects(cardMeshes);
@@ -818,6 +835,20 @@ function CurvedCylinderWebGL({
           }
         }
       };
+
+      const handleMouseEnter = () => {
+        isInteractingRef.current = true;
+        onPauseChangeRef.current?.(true);
+      };
+
+      const handleMouseLeave = () => {
+        isInteractingRef.current = false;
+        if (isDraggingRef.current) isDraggingRef.current = false;
+        onPauseChangeRef.current?.(false);
+      };
+
+      dom.addEventListener('mouseenter', handleMouseEnter);
+      dom.addEventListener('mouseleave', handleMouseLeave);
 
       const handleContextLost = (e: Event) => {
         e.preventDefault();
@@ -881,9 +912,13 @@ function CurvedCylinderWebGL({
           } else {
             currentAngleRef.current += diff * 0.12;
           }
-        } else if (!isDraggingRef.current) {
+        } else if (!isDraggingRef.current && !isInteractingRef.current) {
           const baseSpeed = 0.165;
           currentAngleRef.current += (-baseSpeed + wheelVelocityRef.current) * delta;
+          wheelVelocityRef.current *= 0.94;
+          if (Math.abs(wheelVelocityRef.current) < 0.001) wheelVelocityRef.current = 0;
+        } else if (!isDraggingRef.current && isInteractingRef.current) {
+          currentAngleRef.current += wheelVelocityRef.current * delta;
           wheelVelocityRef.current *= 0.94;
           if (Math.abs(wheelVelocityRef.current) < 0.001) wheelVelocityRef.current = 0;
         }
@@ -925,11 +960,12 @@ function CurvedCylinderWebGL({
         if (resizeObserver) resizeObserver.disconnect();
         cancelAnimationFrame(animationId);
         window.removeEventListener('resize', handleResize);
+        dom.removeEventListener('mouseenter', handleMouseEnter);
+        dom.removeEventListener('mouseleave', handleMouseLeave);
         dom.removeEventListener('webglcontextlost', handleContextLost);
         dom.removeEventListener('mousedown', handlePointerDown);
         window.removeEventListener('mousemove', handlePointerMove);
         window.removeEventListener('mouseup', handlePointerUp);
-        dom.removeEventListener('mouseleave', handlePointerUp);
         dom.removeEventListener('wheel', handleWheel);
         dom.removeEventListener('click', handleClick);
         dom.removeEventListener('touchstart', handlePointerDown);
