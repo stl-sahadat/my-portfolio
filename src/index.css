@@ -499,10 +499,6 @@ html.light #skills text[filter*="svgGreenGlow"] {
 
 /* 1. Off-screen layout skipping: skips layout/paint until scrolled into view */
 #about,
-#projects,
-#websites,
-#apps,
-#automations,
 #skills,
 #experience,
 #blog,

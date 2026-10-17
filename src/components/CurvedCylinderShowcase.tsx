@@ -196,7 +196,11 @@ export default function CurvedCylinderShowcase({
           const badgeWidth = ctx.measureText(badgeText).width + 36;
           ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
           ctx.beginPath();
-          ctx.roundRect(40, 40, badgeWidth, 48, 12);
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(40, 40, badgeWidth, 48, 12);
+          } else {
+            ctx.rect(40, 40, badgeWidth, 48);
+          }
           ctx.fill();
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
           ctx.lineWidth = 2;
@@ -239,7 +243,11 @@ export default function CurvedCylinderShowcase({
           // Glass pill body
           ctx.fillStyle = 'rgba(7, 7, 14, 0.88)';
           ctx.beginPath();
-          ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 14);
+          if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 14);
+          } else {
+            ctx.rect(pillX, pillY, pillWidth, pillHeight);
+          }
           ctx.fill();
 
           // Border
@@ -432,52 +440,57 @@ export default function CurvedCylinderShowcase({
         camera.aspect = newWidth / newHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(newWidth, newHeight);
+        renderer.render(scene, camera);
       };
       window.addEventListener('resize', handleResize);
 
+      // Robust ResizeObserver so canvas adjusts immediately when parent layout resolves
+      let resizeObserver: ResizeObserver | null = null;
+      if (typeof ResizeObserver !== 'undefined' && mount) {
+        resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const w = entry.contentRect.width;
+            const h = entry.contentRect.height;
+            if (w > 50 && h > 50 && renderer && camera) {
+              camera.aspect = w / h;
+              camera.updateProjectionMatrix();
+              renderer.setSize(w, h);
+              renderer.render(scene, camera);
+            }
+          }
+        });
+        resizeObserver.observe(mount);
+      }
+
       // ============================================================
-      // 6. Smooth 60fps Animation Loop (All-Time Continuous Rotation & Streaming)
-      // ============================================================
-      // 5. ANIMATION & RENDER LOOP (Zero Overhead: Completely stops when off-screen)
+      // 6. Smooth 60fps Animation Loop (Active, Responsive & Continuous)
       // ============================================================
       let lastTime = performance.now();
-      let isRunning = false;
+      let isVisible = true;
       let observer: IntersectionObserver | null = null;
-
-      const startLoop = () => {
-        if (!isRunning) {
-          isRunning = true;
-          lastTime = performance.now();
-          animationId = requestAnimationFrame(animate);
-        }
-      };
-
-      const stopLoop = () => {
-        if (isRunning) {
-          isRunning = false;
-          cancelAnimationFrame(animationId);
-        }
-      };
 
       if (typeof IntersectionObserver !== 'undefined' && mount) {
         observer = new IntersectionObserver(
           (entries) => {
-            const visible = entries[0]?.isIntersecting ?? true;
-            if (visible) {
-              startLoop();
-            } else {
-              stopLoop();
+            const entry = entries[0];
+            isVisible = entry ? entry.isIntersecting : true;
+            if (isVisible) {
+              renderer.render(scene, camera);
             }
           },
-          { threshold: 0.02 }
+          { threshold: 0.01 }
         );
         observer.observe(mount);
-      } else {
-        startLoop();
       }
 
+      // Immediate first-frame render so cylinder is NEVER blank!
+      renderer.render(scene, camera);
+
       const animate = (now: number) => {
-        if (!isRunning) return;
+        animationId = requestAnimationFrame(animate);
+
+        // Offscreen throttling: sleep computation when scrolled away to save 100% GPU
+        if (!isVisible) return;
 
         const delta = Math.min((now - lastTime) / 1000, 0.05);
         lastTime = now;
@@ -535,15 +548,15 @@ export default function CurvedCylinderShowcase({
         }
 
         renderer.render(scene, camera);
-        if (isRunning) {
-          animationId = requestAnimationFrame(animate);
-        }
       };
+
+      animationId = requestAnimationFrame(animate);
 
       // Cleanup on unmount
       return () => {
+        if (resizeObserver) resizeObserver.disconnect();
         if (observer) observer.disconnect();
-        stopLoop();
+        cancelAnimationFrame(animationId);
         window.removeEventListener('resize', handleResize);
         dom.removeEventListener('mousedown', handlePointerDown);
         window.removeEventListener('mousemove', handlePointerMove);
