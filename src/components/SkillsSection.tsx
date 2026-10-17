@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LaserBadge from './LaserBadge';
 
 // ============================================================================
 // 5 UNIFIED MASTER CATEGORIES WITH ILLUMINATED CYBER CAPSULE HUBS
@@ -188,8 +189,7 @@ export default function SkillsSection() {
     <section
       ref={sectionRef}
       id="skills"
-      className="w-full bg-black dark:bg-black light:bg-[#f8fafc] transition-colors duration-300 relative overflow-hidden select-none flex flex-col items-center pb-16 scroll-mt-28 min-h-[850px]"
-      style={{ paddingTop: '150px' }}
+      className="w-full bg-black dark:bg-black light:bg-[#f8fafc] transition-colors duration-300 relative overflow-hidden select-none flex flex-col items-center pt-20 sm:pt-28 pb-16 scroll-mt-24 min-h-[850px]"
     >
       {/* Studio Lighting Ambient Glow (Focused warm magma halo behind 3D Glass Battery) */}
       <div
@@ -203,20 +203,17 @@ export default function SkillsSection() {
       />
 
       {/* ==================================================================== */}
-      {/* 1. TOP HEADER: "Skills & Architecture" (2 INCHES BELOW NAVBAR)       */}
+      {/* 1. TOP HEADER: "Skills & Architecture"                               */}
       {/* ==================================================================== */}
-      <div className="relative z-20 mb-2 sm:mb-4 text-center px-4">
-        <h2
-          className={`text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-white transition-all duration-700 ${
-            isFull
-              ? 'drop-shadow-[0_0_35px_rgba(34,197,94,0.55)]'
-              : 'drop-shadow-[0_0_20px_rgba(255,255,255,0.45)]'
-          }`}
-          style={{
-            fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-          }}
-        >
-          Skills & Architecture
+      <div className="relative z-20 mb-3 sm:mb-6 text-center px-4 flex flex-col items-center">
+        <div className="mb-3">
+          <LaserBadge text="SYSTEM CAPABILITIES & ARCHITECTURE" />
+        </div>
+        <h2 className="font-bebas text-4xl sm:text-5xl lg:text-6xl uppercase tracking-wider text-white dark:text-white leading-tight">
+          SKILLS &{' '}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-rose-300 to-red-500">
+            ARCHITECTURE
+          </span>
         </h2>
       </div>
 

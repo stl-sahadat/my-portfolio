@@ -64,9 +64,9 @@ export default function MouseSpotlight() {
     <div className="pointer-events-none fixed inset-0 z-30 overflow-hidden select-none">
       <div
         ref={spotlightRef}
-        className="w-[600px] h-[600px] rounded-full pointer-events-none will-change-transform"
+        className="w-[500px] h-[500px] rounded-full pointer-events-none will-change-transform"
         style={{
-          background: 'radial-gradient(circle, rgba(220, 38, 38, 0.16) 0%, rgba(245, 158, 11, 0.05) 45%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(239, 35, 60, 0.08) 0%, rgba(220, 38, 38, 0.02) 40%, transparent 65%)',
           transform: 'translate3d(-1000px, -1000px, 0)',
         }}
       />

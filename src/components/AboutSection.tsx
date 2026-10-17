@@ -35,12 +35,12 @@ export default function AboutSection() {
   const philosophyQuote = customAbout.philosophyQuote || "Real engineering is measured by execution, not certificates. Turning autonomous intelligence into production solutions that eliminate operational friction and scale effortlessly.";
 
   return (
-    <section id="about" className="py-24 sm:py-32 relative overflow-hidden bg-transparent scroll-mt-20">
+    <section id="about" className="py-20 sm:py-28 relative overflow-hidden bg-transparent scroll-mt-20">
       
       {/* Refined subtle ambient depth */}
-      <div className="absolute top-1/4 -left-32 w-[350px] h-[350px] bg-red-600/5 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+      <div className="absolute top-1/4 -left-32 w-[350px] h-[350px] bg-crimson/5 rounded-full blur-[140px] pointer-events-none -z-10"></div>
 
-      <div className="max-w-7xl 2xl:max-w-[1520px] mx-auto px-6 sm:px-12 2xl:px-16 relative z-10">
+      <div className="max-w-7xl 2xl:max-w-[1520px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 relative z-10">
         
         {/* Section Header: Clean, Bold, Executive Architecture */}
         <ScrollReveal animation="fade-up" duration={700}>

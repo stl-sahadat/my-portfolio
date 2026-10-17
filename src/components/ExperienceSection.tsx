@@ -86,11 +86,11 @@ export default function ExperienceSection() {
   ];
 
   return (
-    <section id="experience" className="py-24 sm:py-32 border-b border-white/10 dark:border-white/10 light:border-black/10 bg-transparent relative overflow-hidden scroll-mt-20">
+    <section id="experience" className="py-20 sm:py-28 border-b border-white/10 dark:border-white/10 light:border-black/10 bg-transparent relative overflow-hidden scroll-mt-20">
       {/* Background ambient lighting */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-tr from-crimson/10 via-purple-600/5 to-cyan-500/10 blur-[140px] rounded-full pointer-events-none -z-10" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-crimson/5 blur-[140px] rounded-full pointer-events-none -z-10" />
 
-      <div className="max-w-7xl 2xl:max-w-[1520px] mx-auto px-6 sm:px-12 2xl:px-16 relative z-10">
+      <div className="max-w-7xl 2xl:max-w-[1520px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 relative z-10">
         
         {/* Section Header: Matching Hero & About Architectural Grandeur */}
         <ScrollReveal animation="fade-up" duration={700}>

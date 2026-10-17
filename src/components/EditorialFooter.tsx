@@ -57,9 +57,9 @@ function VisionOS3DAppIcon({
 
   return (
     <div className="relative shrink-0 select-none">
-      {/* Soft Ambient Cast Shadow & Color Aura */}
+      {/* Soft Ambient Cast Shadow & Color Aura on Hover */}
       <div
-        className="absolute -inset-1.5 rounded-2xl blur-md opacity-50 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        className="absolute -inset-1.5 rounded-2xl blur-md opacity-0 group-hover:opacity-75 transition-opacity duration-300 pointer-events-none"
         style={{ background: cfg.glow }}
       />
 
@@ -156,12 +156,12 @@ export default function EditorialFooter() {
   const gmailDirectUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(personal.email || 'sahadat.info01@gmail.com')}&su=${encodeURIComponent("Project Inquiry - AI Agent Architecture")}&body=${encodeURIComponent("Hi Sahadat vai,\n\nI am reaching out regarding an AI Architecture and Autonomous Agent project.\n\nProject Overview:\n\nBest regards,")}`;
 
   return (
-    <footer id="contact" className="py-24 sm:py-32 relative overflow-hidden border-t border-white/10 dark:border-white/10 light:border-black/10 bg-transparent scroll-mt-20">
+    <footer id="contact" className="py-20 sm:py-28 relative overflow-hidden border-t border-white/10 dark:border-white/10 light:border-black/10 bg-transparent scroll-mt-20">
       
       {/* Subtle Ambient Depth */}
-      <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-red-600/5 rounded-full blur-[140px] pointer-events-none -z-10" />
+      <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-crimson/5 rounded-full blur-[140px] pointer-events-none -z-10" />
 
-      <div className="max-w-7xl 2xl:max-w-[1520px] mx-auto px-6 sm:px-12 2xl:px-16 relative z-10">
+      <div className="max-w-7xl 2xl:max-w-[1520px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16 relative z-10">
         
         {/* SECTION HEADER: Full-width top alignment matching Experience / About / Blog */}
         <ScrollReveal animation="fade-up" duration={700}>

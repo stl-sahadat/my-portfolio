@@ -7,7 +7,7 @@ import AnimatedMetricCard from './AnimatedMetricCard';
 import LaserBadge from './LaserBadge';
 import GemActionButton from './GemActionButton';
 
-// Individual Cyber Tech Marquee Pill with Executive Luxury Design (Subtle on rest, Spectacular on hover)
+// Individual Cyber Tech Marquee Pill with Executive Luxury Design (Subtle on rest, Crisp on hover)
 function TechMarqueePill({ tech }) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -17,47 +17,47 @@ function TechMarqueePill({ tech }) {
       onMouseLeave={() => setIsHovered(false)}
       className="relative shrink-0 select-none cursor-pointer py-1.5 transition-all duration-300"
       style={{
-        transform: isHovered ? 'translateY(-2.5px) scale(1.06)' : 'translateY(0) scale(1)',
+        transform: isHovered ? 'translateY(-2px) scale(1.04)' : 'translateY(0) scale(1)',
       }}
     >
-      {/* Outer Neon Aura Bloom */}
+      {/* Outer Glow (Visible only on hover for pristine rest state) */}
       <div
-        className="absolute -inset-[2px] rounded-full overflow-hidden blur-[8px] pointer-events-none transition-opacity duration-500"
+        className="absolute -inset-[2px] rounded-full overflow-hidden blur-[6px] pointer-events-none transition-opacity duration-300"
         style={{
-          opacity: isHovered ? 0.85 : 0.35,
+          opacity: isHovered ? 0.6 : 0,
         }}
       >
         <div
-          className="absolute top-1/2 left-1/2 w-[280px] h-[280px] animate-beam-orbit pointer-events-none"
+          className="absolute top-1/2 left-1/2 w-[260px] h-[260px] animate-beam-orbit pointer-events-none"
           style={{
             background: tech.spectrum,
-            animationDuration: '5s',
+            animationDuration: '6s',
           }}
         />
       </div>
 
-      {/* Border Container: Dynamic Revolving Conic Beam */}
+      {/* Border Container */}
       <div
-        className="relative p-[1.5px] rounded-full overflow-hidden transition-all duration-300"
+        className="relative p-[1px] rounded-full overflow-hidden transition-all duration-300"
         style={{
           boxShadow: isHovered
-            ? `0 0 18px ${tech.glowColor}, 0 0 30px rgba(0,0,0,0.8)`
-            : `0 0 10px ${tech.glowColor}, 0 2px 8px rgba(0, 0, 0, 0.4)`,
+            ? `0 0 14px ${tech.accent}50, 0 4px 12px rgba(0,0,0,0.6)`
+            : '0 1px 3px rgba(0, 0, 0, 0.4)',
         }}
       >
-        {/* Revolving Conic Gradient (55% visible on rest, 100% on hover) */}
+        {/* Revolving Conic Gradient (Subtle on rest, full on hover) */}
         <div
-          className="absolute top-1/2 left-1/2 w-[280px] h-[280px] animate-beam-orbit pointer-events-none transition-opacity duration-300"
+          className="absolute top-1/2 left-1/2 w-[260px] h-[260px] animate-beam-orbit pointer-events-none transition-opacity duration-300"
           style={{
             background: tech.spectrum,
-            animationDuration: '5s',
-            opacity: isHovered ? 1 : 0.55,
+            animationDuration: '6s',
+            opacity: isHovered ? 0.9 : 0.25,
           }}
         />
 
         {/* Inner Dark Velvet Glass Pill */}
         <div
-          className="relative flex items-center gap-2.5 px-4 py-1.5 sm:py-2 rounded-full transition-all duration-300 bg-[#080812]/95 backdrop-blur-md z-10"
+          className="relative flex items-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-full transition-all duration-300 bg-[#080811]/95 border border-white/8 backdrop-blur-md z-10"
         >
           {/* Glowing Brand LED Node */}
           <span
@@ -65,15 +65,15 @@ function TechMarqueePill({ tech }) {
             style={{
               backgroundColor: tech.accent,
               boxShadow: isHovered
-                ? `0 0 10px 2px ${tech.accent}`
-                : `0 0 6px ${tech.accent}`,
-              transform: isHovered ? 'scale(1.3)' : 'scale(1)',
+                ? `0 0 8px 1px ${tech.accent}`
+                : `0 0 4px ${tech.accent}`,
+              transform: isHovered ? 'scale(1.2)' : 'scale(1)',
             }}
           />
 
           {/* Label Text */}
           <span
-            className="font-mono text-xs tracking-wider whitespace-nowrap transition-colors duration-300"
+            className="font-mono text-[11px] sm:text-xs tracking-wider whitespace-nowrap transition-colors duration-300"
             style={{
               color: isHovered ? '#ffffff' : '#d4d4d8',
               fontWeight: isHovered ? 600 : 500,
@@ -236,16 +236,16 @@ export default function AgencyHero() {
             {/* 1. Dynamic Animated Border-Beam Capsule with Continuous Neon Aura (Reference Match) */}
             <div className="mb-4 sm:mb-5 flex items-center justify-start animate-in fade-in duration-700">
               <div className="relative inline-flex items-center group cursor-default select-none">
-                {/* Deep Ambient Purple/Violet Atmospheric Backlight Glow */}
-                <div className="absolute -inset-2 sm:-inset-3 rounded-full bg-gradient-to-r from-cyan-500/25 via-purple-600/50 to-pink-500/35 blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+                {/* Subtle Cyber Crimson Atmospheric Backlight Glow */}
+                <div className="absolute -inset-1.5 sm:-inset-2 rounded-full bg-gradient-to-r from-crimson/25 via-red-600/30 to-rose-600/20 blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 pointer-events-none" />
 
                 {/* Rotating Ambient Conic Aura Sweep (Diffuse Outer Light matching reference) */}
-                <div className="absolute -inset-1 sm:-inset-1.5 rounded-full overflow-hidden pointer-events-none opacity-85">
+                <div className="absolute -inset-1 sm:-inset-1.5 rounded-full overflow-hidden pointer-events-none opacity-60">
                   <div className="absolute top-1/2 left-1/2 w-[350%] aspect-square laser-ambient-aura animate-beam-spin blur-md" />
                 </div>
 
                 {/* Razor-Sharp Border-Beam Capsule Container */}
-                <div className="relative inline-flex p-[1.5px] rounded-full overflow-hidden shadow-[0_0_24px_rgba(139,92,246,0.35)]">
+                <div className="relative inline-flex p-[1.5px] rounded-full overflow-hidden shadow-[0_0_14px_rgba(239,35,60,0.25)]">
                   {/* 360° Continuous Rotating Laser Beam */}
                   <div className="absolute top-1/2 left-1/2 w-[400%] aspect-square laser-beam-gradient animate-beam-spin pointer-events-none" />
 

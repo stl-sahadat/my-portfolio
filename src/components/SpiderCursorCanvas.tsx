@@ -224,8 +224,8 @@ export default function SpiderCursorCanvas() {
 
       // Lightweight, delicate, hairline styling as originally created
       ctx.lineWidth = 0.65; // Hairline fine strand
-      ctx.strokeStyle = 'rgba(239, 35, 60, 0.42)'; // Clean cyber crimson
-      ctx.fillStyle = 'rgba(244, 63, 94, 0.32)'; // Subtle stardust nodes
+      ctx.strokeStyle = 'rgba(239, 35, 60, 0.28)'; // Subtle clean cyber crimson
+      ctx.fillStyle = 'rgba(239, 35, 60, 0.22)'; // Soft stardust nodes
 
       const t = now / 1000;
       spiders.forEach((spider) => spider.tick(t));
@@ -250,7 +250,7 @@ export default function SpiderCursorCanvas() {
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-0 w-full h-full"
       style={{
-        opacity: 'var(--canvas-opacity, 0.9)',
+        opacity: 'var(--canvas-opacity, 0.45)',
         mixBlendMode: 'screen',
       }}
     />

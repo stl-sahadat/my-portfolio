@@ -38,8 +38,8 @@ export default function BlogSection() {
   ];
 
   return (
-    <section id="blog" className="py-24 2xl:py-36 border-b border-white/10 dark:border-white/10 light:border-black/10 bg-transparent scroll-mt-20">
-      <div className="max-w-7xl 2xl:max-w-[1520px] mx-auto px-6 sm:px-12 2xl:px-16">
+    <section id="blog" className="py-20 sm:py-28 border-b border-white/10 dark:border-white/10 light:border-black/10 bg-transparent scroll-mt-20">
+      <div className="max-w-7xl 2xl:max-w-[1520px] mx-auto px-4 sm:px-8 lg:px-12 2xl:px-16">
         
         {/* Header */}
         <ScrollReveal animation="fade-up" duration={700}>

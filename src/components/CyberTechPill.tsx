@@ -98,65 +98,64 @@ export default function CyberTechPill({ name, config }) {
       onMouseLeave={() => setIsHovered(false)}
       className="relative shrink-0 select-none cursor-pointer py-1.5 transition-all duration-300"
       style={{
-        transform: isHovered ? 'translateY(-2.5px) scale(1.06)' : 'translateY(0) scale(1)',
+        transform: isHovered ? 'translateY(-2px) scale(1.04)' : 'translateY(0) scale(1)',
       }}
     >
-      {/* Outer Neon Aura Bloom (Radiant ambient aura) */}
+      {/* Outer Glow (Visible on hover) */}
       <div
-        className="absolute -inset-[2px] rounded-full overflow-hidden blur-[8px] pointer-events-none transition-opacity duration-500"
+        className="absolute -inset-[2px] rounded-full overflow-hidden blur-[6px] pointer-events-none transition-opacity duration-300"
         style={{
-          opacity: isHovered ? 0.85 : 0.35,
+          opacity: isHovered ? 0.6 : 0,
         }}
       >
         <div
-          className="absolute top-1/2 left-1/2 w-[280px] h-[280px] animate-beam-orbit pointer-events-none"
+          className="absolute top-1/2 left-1/2 w-[260px] h-[260px] animate-beam-orbit pointer-events-none"
           style={{
             background: theme.spectrum,
-            animationDuration: '4.5s',
+            animationDuration: '5s',
           }}
         />
       </div>
 
-      {/* Border Container: Dynamic Revolving Conic Beam */}
+      {/* Border Container */}
       <div
-        className="relative p-[1.5px] rounded-full overflow-hidden transition-all duration-300"
+        className="relative p-[1px] rounded-full overflow-hidden transition-all duration-300"
         style={{
           boxShadow: isHovered
-            ? `0 0 18px ${theme.glowColor}, 0 0 30px rgba(0,0,0,0.8)`
-            : `0 0 10px ${theme.glowColor}, 0 2px 8px rgba(0, 0, 0, 0.5)`,
+            ? `0 0 14px ${theme.accent}50, 0 4px 12px rgba(0,0,0,0.6)`
+            : '0 1px 3px rgba(0, 0, 0, 0.4)',
         }}
       >
-        {/* Revolving Conic Gradient (Reveals 55% at rest, 100% on hover) */}
+        {/* Revolving Conic Gradient (Subtle on rest, full on hover) */}
         <div
-          className="absolute top-1/2 left-1/2 w-[280px] h-[280px] animate-beam-orbit pointer-events-none transition-opacity duration-300"
+          className="absolute top-1/2 left-1/2 w-[260px] h-[260px] animate-beam-orbit pointer-events-none transition-opacity duration-300"
           style={{
             background: theme.spectrum,
-            animationDuration: '4.5s',
-            opacity: isHovered ? 1 : 0.55,
+            animationDuration: '5s',
+            opacity: isHovered ? 0.9 : 0.25,
           }}
         />
 
         {/* Inner Dark Velvet Glass Body */}
-        <div className="relative flex items-center gap-2.5 px-3.5 py-1.5 sm:py-2 rounded-full transition-all duration-300 bg-[#080812]/95 backdrop-blur-md z-10">
+        <div className="relative flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full transition-all duration-300 bg-[#080811]/95 border border-white/8 backdrop-blur-md z-10">
           {/* Glowing Brand LED Node */}
           <span
             className="w-1.5 h-1.5 rounded-full transition-all duration-300 shrink-0"
             style={{
               backgroundColor: theme.accent,
               boxShadow: isHovered
-                ? `0 0 12px 2px ${theme.accent}`
-                : `0 0 6px ${theme.accent}`,
-              transform: isHovered ? 'scale(1.3)' : 'scale(1)',
+                ? `0 0 8px 1px ${theme.accent}`
+                : `0 0 4px ${theme.accent}`,
+              transform: isHovered ? 'scale(1.2)' : 'scale(1)',
             }}
           />
 
           {/* Label Text */}
           <span
-            className="font-mono text-xs uppercase tracking-wider whitespace-nowrap transition-colors duration-300"
+            className="font-mono text-[11px] sm:text-xs uppercase tracking-wider whitespace-nowrap transition-colors duration-300"
             style={{
-              color: isHovered ? '#ffffff' : '#f4f4f5',
+              color: isHovered ? '#ffffff' : '#d4d4d8',
               fontWeight: isHovered ? 600 : 500,
-              textShadow: isHovered ? `0 0 12px ${theme.accent}` : 'none',
             }}
           >
             {name}

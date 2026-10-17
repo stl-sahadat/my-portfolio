@@ -7,16 +7,16 @@ import React from 'react';
 export default function LaserBadge({ text, icon: Icon, className = '' }) {
   return (
     <div className={`relative inline-flex items-center group cursor-default select-none ${className}`}>
-      {/* 1. Deep Ambient Purple/Violet Atmospheric Backlight Glow */}
-      <div className="absolute -inset-2 sm:-inset-3 rounded-full bg-gradient-to-r from-cyan-500/25 via-purple-600/50 to-pink-500/35 blur-xl opacity-75 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+      {/* 1. Subtle Cyber Crimson Atmospheric Backlight Glow */}
+      <div className="absolute -inset-1.5 sm:-inset-2 rounded-full bg-gradient-to-r from-crimson/25 via-red-600/30 to-rose-600/20 blur-lg opacity-40 group-hover:opacity-75 transition-opacity duration-500 pointer-events-none" />
 
       {/* 2. Rotating Ambient Conic Aura Sweep (Diffuse Outer Light) */}
-      <div className="absolute -inset-1 sm:-inset-1.5 rounded-full overflow-hidden pointer-events-none opacity-85">
+      <div className="absolute -inset-1 sm:-inset-1.5 rounded-full overflow-hidden pointer-events-none opacity-60">
         <div className="absolute top-1/2 left-1/2 w-[350%] aspect-square laser-ambient-aura animate-beam-spin blur-md" />
       </div>
 
       {/* 3. Razor-Sharp Border-Beam Capsule Container */}
-      <div className="relative inline-flex p-[1.5px] rounded-full overflow-hidden shadow-[0_0_24px_rgba(139,92,246,0.35)]">
+      <div className="relative inline-flex p-[1.5px] rounded-full overflow-hidden shadow-[0_0_14px_rgba(239,35,60,0.25)]">
         {/* 360° Continuous Rotating Laser Beam */}
         <div className="absolute top-1/2 left-1/2 w-[400%] aspect-square laser-beam-gradient animate-beam-spin pointer-events-none" />
 

@@ -147,15 +147,13 @@
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    transparent 45deg,
-    #00f0ff 90deg,
-    #3b82f6 130deg,
-    #8b5cf6 170deg,
-    #c084fc 195deg,
-    #ffffff 210deg,
-    #f43f5e 245deg,
-    #ef233c 280deg,
-    transparent 330deg,
+    transparent 50deg,
+    rgba(239, 35, 60, 0.4) 100deg,
+    rgba(255, 77, 109, 0.8) 160deg,
+    #ffffff 205deg,
+    #ef233c 230deg,
+    rgba(220, 38, 38, 0.5) 265deg,
+    transparent 310deg,
     transparent 360deg
   );
 }
@@ -164,11 +162,11 @@
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    rgba(0, 240, 255, 0.45) 85deg,
-    rgba(139, 92, 246, 0.85) 165deg,
-    rgba(217, 70, 239, 0.75) 215deg,
-    rgba(239, 35, 60, 0.55) 275deg,
-    transparent 340deg,
+    rgba(239, 35, 60, 0.20) 100deg,
+    rgba(255, 77, 109, 0.35) 170deg,
+    rgba(239, 35, 60, 0.45) 220deg,
+    rgba(185, 28, 28, 0.25) 275deg,
+    transparent 330deg,
     transparent 360deg
   );
 }

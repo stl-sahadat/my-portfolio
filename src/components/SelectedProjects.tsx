@@ -384,7 +384,7 @@ export default function SelectedProjects({
               {/* Glowing Pill Capsule at the corner with Crimson Theme & Scroll Lock */}
               <div
                 ref={capsuleRef}
-                className="relative flex items-center h-8 sm:h-8.5 max-w-[140px] sm:max-w-[175px] rounded-full border border-crimson/45 hover:border-crimson bg-gradient-to-r from-black via-zinc-950 to-black shadow-[0_0_15px_rgba(239,35,60,0.35),inset_0_1px_1px_rgba(255,255,255,0.12)] hover:shadow-[0_0_22px_rgba(239,35,60,0.55)] transition-all duration-300 px-1.5 group/pill"
+                className="relative flex items-center h-8 sm:h-8.5 max-w-[140px] sm:max-w-[175px] rounded-full border border-crimson/40 hover:border-crimson bg-[#07070d]/90 shadow-[0_0_10px_rgba(239,35,60,0.25)] transition-all duration-300 px-1.5 group/pill"
                 title="Scroll wheel to browse numbers // Click any number to jump to project"
               >
                 {/* Inner Horizontal Scroll with Mouse Wheel & Touch swipe */}
@@ -405,14 +405,11 @@ export default function SelectedProjects({
                         onClick={() => rotateToIndex(idx)}
                         className={`relative font-mono text-xs font-bold shrink-0 px-2.5 py-0.5 rounded-full transition-all duration-300 ease-out cursor-pointer flex items-center justify-center select-none ${
                           isCurrent
-                            ? 'bg-crimson text-white shadow-[0_0_14px_#ef233c,0_0_26px_rgba(239,35,60,0.6)] scale-110 z-10 font-black'
+                            ? 'bg-crimson text-white shadow-[0_0_10px_rgba(239,35,60,0.5)] scale-105 z-10 font-bold'
                             : 'text-zinc-400 hover:text-white hover:bg-white/10 scale-95 opacity-70 hover:opacity-100 font-medium'
                         }`}
                         title={`Project ${displayNum}: ${p.title} (Click to view)`}
                       >
-                        {isCurrent && (
-                          <span className="absolute inset-0 rounded-full bg-crimson animate-ping opacity-35 pointer-events-none" />
-                        )}
                         <span className="relative z-10">{displayNum}</span>
                       </button>
                     );

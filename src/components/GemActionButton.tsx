@@ -376,24 +376,24 @@ export default function GemActionButton({
   const baseClasses = isWhatsApp
     ? `
       group relative inline-flex items-center gap-2.5 rounded-full overflow-hidden
-      border border-emerald-400/40 dark:border-emerald-400/45 hover:border-emerald-300
+      border border-emerald-400/40 hover:border-emerald-300
       bg-gradient-to-r from-[#0b2416] via-[#081a11] to-[#0a2e1c]
       text-white font-outfit font-bold tracking-wide
-      transition-all duration-500 hover:scale-105 active:scale-95
-      shadow-[0_0_22px_rgba(37,211,102,0.38),0_0_32px_rgba(16,185,129,0.3),inset_0_1px_1px_rgba(255,255,255,0.6)]
-      hover:shadow-[0_0_38px_rgba(37,211,102,0.8),0_0_45px_rgba(16,185,129,0.7),inset_0_1px_2px_rgba(255,255,255,0.85)]
+      transition-all duration-300 hover:scale-105 active:scale-95
+      shadow-[0_0_12px_rgba(37,211,102,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)]
+      hover:shadow-[0_0_20px_rgba(37,211,102,0.5),inset_0_1px_2px_rgba(255,255,255,0.6)]
       cursor-pointer select-none whitespace-nowrap
       ${sizeClasses[size] || sizeClasses.md}
       ${className}
     `
     : `
       group relative inline-flex items-center gap-2.5 rounded-full overflow-hidden
-      border border-white/30 dark:border-white/35
-      bg-gradient-to-r from-[#171722] via-[#101018] to-[#1c1220]
+      border border-white/20 hover:border-crimson/50
+      bg-gradient-to-r from-[#14141e] via-[#0d0d14] to-[#181116]
       text-white font-outfit font-bold tracking-wide
-      transition-all duration-500 hover:scale-105 active:scale-95
-      shadow-[0_0_20px_rgba(168,85,247,0.35),0_0_25px_rgba(220,38,38,0.35),inset_0_1px_1px_rgba(255,255,255,0.5)]
-      hover:shadow-[0_0_35px_rgba(220,38,38,0.75),0_0_30px_rgba(168,85,247,0.65),inset_0_1px_2px_rgba(255,255,255,0.8)]
+      transition-all duration-300 hover:scale-105 active:scale-95
+      shadow-[0_0_12px_rgba(220,38,38,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)]
+      hover:shadow-[0_0_20px_rgba(220,38,38,0.5),inset_0_1px_2px_rgba(255,255,255,0.6)]
       cursor-pointer select-none whitespace-nowrap
       ${sizeClasses[size] || sizeClasses.md}
       ${className}

@@ -467,7 +467,7 @@ export default function FanningCardsShowcase({
             e.stopPropagation();
           }}
           title={`Visit ${initialProject?.title || 'Live Demo'}`}
-          className="group relative inline-flex items-center gap-2.5 px-6 sm:px-7 py-2 sm:py-2.5 rounded-full overflow-hidden border border-white/30 dark:border-white/35 bg-gradient-to-r from-[#171722] via-[#101018] to-[#1c1220] text-white text-xs sm:text-sm font-outfit font-bold tracking-wide transition-all duration-500 hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(168,85,247,0.35),0_0_25px_rgba(220,38,38,0.35),inset_0_1px_1px_rgba(255,255,255,0.5)] hover:shadow-[0_0_35px_rgba(220,38,38,0.75),0_0_30px_rgba(168,85,247,0.65),inset_0_1px_2px_rgba(255,255,255,0.8)] cursor-pointer whitespace-nowrap"
+          className="group relative inline-flex items-center gap-2.5 px-6 sm:px-7 py-2 sm:py-2.5 rounded-full overflow-hidden border border-white/20 hover:border-crimson/50 bg-gradient-to-r from-[#14141e] via-[#0d0d14] to-[#181116] text-white text-xs sm:text-sm font-outfit font-bold tracking-wide transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(220,38,38,0.25),inset_0_1px_1px_rgba(255,255,255,0.4)] hover:shadow-[0_0_20px_rgba(220,38,38,0.5),inset_0_1px_2px_rgba(255,255,255,0.6)] cursor-pointer whitespace-nowrap"
         >
           {/* Sweeping Holographic Shimmer Ray on Hover */}
           <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[250%] transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
