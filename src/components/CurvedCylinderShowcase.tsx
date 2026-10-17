@@ -1,39 +1,66 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as THREE from 'three';
 
+interface CurvedCylinderShowcaseProps {
+  projects: any[];
+  activeIdx?: number;
+  onActiveChange?: (idx: number) => void;
+  onProjectClick?: ((proj: any) => void) | null;
+  onPauseChange?: (paused: boolean) => void;
+}
+
 /**
- * CurvedCylinderShowcase:
- * A true WebGL 3D curved glass cylinder (like a round glass cup / cylindrical vessel).
- * All projects curve seamlessly along the cylinder wall.
- * Built using Three.js CylinderGeometry with high-res Canvas dynamic textures.
- * Exactly as requested by Sahadat vai - 100% authentic curved glass 3D cylinder.
+ * Checks whether WebGL / WebGL2 context can actually be created in the current browser.
+ * On Linux Wayland with --use-gl=disabled, this correctly returns false.
  */
-export default function CurvedCylinderShowcase({
+function checkWebGLSupport(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    const gl =
+      canvas.getContext('webgl2') ||
+      canvas.getContext('webgl') ||
+      canvas.getContext('experimental-webgl');
+    return Boolean(gl);
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * ZeroGapCSS3DCylinder:
+ * A 100% reliable, zero-gap 3D curved glass cylinder rendered via CSS 3D Transforms.
+ * Works seamlessly across ALL browsers, including Linux Wayland with --use-gl=disabled,
+ * software rendering, mobile, and desktop.
+ * Edge-to-edge touching with ZERO gap between project cards!
+ */
+function ZeroGapCSS3DCylinder({
   projects = [],
   activeIdx = 0,
   onActiveChange,
   onProjectClick,
   onPauseChange,
-}: any) {
-  const mountRef = useRef<HTMLDivElement>(null);
+}: CurvedCylinderShowcaseProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cylinderRef = useRef<HTMLDivElement>(null);
+
   const currentAngleRef = useRef(0);
-  const isInteractingRef = useRef(false);
   const isDraggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragStartAngleRef = useRef(0);
+  const dragDistanceRef = useRef(0);
+  const wheelVelocityRef = useRef(0);
+
   const activeIdxRef = useRef(activeIdx);
+  const lastReportedIdxRef = useRef(activeIdx);
   const onActiveChangeRef = useRef(onActiveChange);
   const onPauseChangeRef = useRef(onPauseChange);
 
-  // Safeguards against cyclical feedback loops:
-  const lastReportedIdxRef = useRef(activeIdx);
   const isSnappingRef = useRef(false);
   const snapTargetAngleRef = useRef(0);
-  const wheelVelocityRef = useRef(0);
 
-  useEffect(() => {
-    onPauseChangeRef.current = onPauseChange;
-  }, [onPauseChange]);
+  const [scale, setScale] = useState(1);
+  const scaleRef = useRef(scale);
 
   // Sync refs
   useEffect(() => {
@@ -44,7 +71,378 @@ export default function CurvedCylinderShowcase({
     onActiveChangeRef.current = onActiveChange;
   }, [onActiveChange]);
 
-  // Rotate to specific index ONLY when activeIdx is changed EXTERNALLY (e.g. user clicked number button)
+  useEffect(() => {
+    onPauseChangeRef.current = onPauseChange;
+  }, [onPauseChange]);
+
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
+
+  // Responsive scale handler
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      if (w < 440) setScale(0.70);
+      else if (w < 640) setScale(0.80);
+      else if (w < 768) setScale(0.88);
+      else if (w < 1024) setScale(0.95);
+      else setScale(1.0);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const total = projects.length || 1;
+  const numSlots = 5;
+  const step = (Math.PI * 2) / numSlots; // 72 deg = ~1.2566 rad
+
+  // External snap to activeIdx (e.g. user clicked a pagination button 01, 02...)
+  useEffect(() => {
+    if (activeIdx === lastReportedIdxRef.current) return;
+    lastReportedIdxRef.current = activeIdx;
+    if (projects.length === 0) return;
+
+    const currentFront = Math.round(-currentAngleRef.current / step);
+    const currentFrontIdx = ((currentFront % total) + total) % total;
+    let diff = activeIdx - currentFrontIdx;
+    if (diff > total / 2) diff -= total;
+    if (diff < -total / 2) diff += total;
+
+    snapTargetAngleRef.current = currentAngleRef.current - diff * step;
+    isSnappingRef.current = true;
+  }, [activeIdx, total, step, projects.length]);
+
+  // Silky smooth 60fps RAF loop
+  useEffect(() => {
+    let animationId: number;
+    let lastTime = performance.now();
+
+    const animate = (now: number) => {
+      animationId = requestAnimationFrame(animate);
+      const delta = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      if (isSnappingRef.current) {
+        const diff = snapTargetAngleRef.current - currentAngleRef.current;
+        if (Math.abs(diff) < 0.004) {
+          currentAngleRef.current = snapTargetAngleRef.current;
+          isSnappingRef.current = false;
+        } else {
+          currentAngleRef.current += diff * 0.14;
+        }
+      } else if (!isDraggingRef.current) {
+        // Continuous, luxury rotation: ~0.165 rad/sec
+        const baseSpeed = 0.165;
+        currentAngleRef.current += (-baseSpeed + wheelVelocityRef.current) * delta;
+        wheelVelocityRef.current *= 0.94;
+        if (Math.abs(wheelVelocityRef.current) < 0.001) wheelVelocityRef.current = 0;
+      }
+
+      // Update 3D transform directly on DOM for maximum 60fps performance without React re-render lag
+      if (cylinderRef.current) {
+        cylinderRef.current.style.transform = `scale(${scaleRef.current}) rotateX(-3.5deg) rotateY(${currentAngleRef.current}rad)`;
+      }
+
+      // Detect front-facing card and sync activeIdx
+      const stepProgress = -currentAngleRef.current / step;
+      const frontIdx = ((Math.round(stepProgress) % total) + total) % total;
+      if (frontIdx !== activeIdxRef.current) {
+        activeIdxRef.current = frontIdx;
+        lastReportedIdxRef.current = frontIdx;
+        onActiveChangeRef.current?.(frontIdx);
+      }
+    };
+
+    animationId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animationId);
+  }, [step, total]);
+
+  // Pointer & Touch interactions
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    isDraggingRef.current = true;
+    dragStartXRef.current = e.clientX;
+    dragStartAngleRef.current = currentAngleRef.current;
+    dragDistanceRef.current = 0;
+    isSnappingRef.current = false;
+    wheelVelocityRef.current = 0;
+    onPauseChangeRef.current?.(true);
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    const deltaX = e.clientX - dragStartXRef.current;
+    dragDistanceRef.current = Math.abs(deltaX);
+    currentAngleRef.current = dragStartAngleRef.current + deltaX * 0.0075;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    onPauseChangeRef.current?.(false);
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    isSnappingRef.current = false;
+    const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+    if (Math.abs(delta) < 0.2) return;
+    wheelVelocityRef.current -= delta * 0.0028;
+    wheelVelocityRef.current = Math.max(-2.5, Math.min(2.5, wheelVelocityRef.current));
+  };
+
+  // Card click handler
+  const handleCardClick = (proj: any) => {
+    if (dragDistanceRef.current > 6) return; // Ignore drag release
+    if (onProjectClick) {
+      onProjectClick(proj);
+    } else if (proj?.demoUrl && proj.demoUrl !== 'https://github.com/stl-sahadat') {
+      window.open(proj.demoUrl, '_blank', 'noopener,noreferrer');
+    } else if (proj?.githubUrl) {
+      window.open(proj.githubUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  // Fixed 5 slots arranged symmetrically on the cylinder
+  // Geometric math for 5-slot cylinder with Radius R = 340px:
+  // Apothem A = R * cos(36 deg) = 275px
+  // Exact chord width = 2 * A * tan(36 deg) = 399.6px
+  // With W = 404px, adjacent panels overlap by 2px, eliminating ANY seam gap completely!
+  const slots = [0, 1, 2, 3, 4];
+
+  // Distinct rich cyber fallback gradients matching reference image
+  const fallbackGradients = [
+    'linear-gradient(135deg, #1e1b4b 0%, #0284c7 40%, #f97316 100%)',
+    'linear-gradient(135deg, #312e81 0%, #4c1d95 50%, #831843 100%)',
+    'linear-gradient(135deg, #1e293b 0%, #0f172a 60%, #020617 100%)',
+    'linear-gradient(135deg, #1c1917 0%, #292524 50%, #44403c 100%)',
+    'linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #3b0764 100%)',
+  ];
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full h-[350px] sm:h-[400px] md:h-[440px] flex items-center justify-center relative select-none cursor-grab active:cursor-grabbing overflow-visible"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onWheel={handleWheel}
+      title="Drag or swipe to rotate the curved 3D glass cylinder"
+    >
+      {/* Cylindrical Viewport with horizontal horizon depth fade */}
+      <div
+        className="relative w-full max-w-[620px] h-[340px] flex items-center justify-center overflow-visible"
+        style={{
+          perspective: '1100px',
+          perspectiveOrigin: '50% 50%',
+          maskImage: 'linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 7%, black 93%, transparent 100%)',
+        }}
+      >
+        {/* Rotating 3D Cylinder Container */}
+        <div
+          ref={cylinderRef}
+          className="absolute w-0 h-0"
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: `scale(${scale}) rotateX(-3.5deg) rotateY(0rad)`,
+          }}
+        >
+          {/* Central Obsidian Core Disk */}
+          <div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: '380px',
+              height: '380px',
+              left: '-190px',
+              top: '-190px',
+              transform: 'rotateX(90deg)',
+              background: 'radial-gradient(circle at center, #0a0a14 0%, #030306 85%)',
+              boxShadow: '0 0 60px rgba(0,0,0,0.95)',
+            }}
+          />
+
+          {/* 5 Seamless Zero-Gap Physical Card Panels */}
+          {slots.map((s) => {
+            const slotAngleDeg = s * 72;
+            const projIdx = s % total;
+            const proj = projects[projIdx] || projects[0] || {};
+            const bgGradient = fallbackGradients[s % fallbackGradients.length];
+
+            return (
+              <div
+                key={`slot-${s}`}
+                onClick={() => handleCardClick(proj)}
+                className="absolute overflow-hidden cursor-pointer"
+                style={{
+                  width: '404px',
+                  height: '250px',
+                  left: '-202px',
+                  top: '-125px',
+                  transform: `rotateY(${slotAngleDeg}deg) translateZ(275px)`,
+                  transformStyle: 'preserve-3d',
+                  backfaceVisibility: 'hidden',
+                  background: '#090912',
+                  borderRight: '1.5px solid rgba(255,255,255,0.22)',
+                  borderLeft: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: 'inset 0 1.5px 0 rgba(255,255,255,0.25), inset 0 -1.5px 0 rgba(239,68,68,0.3)',
+                }}
+              >
+                {/* Project Screenshot Image with Cyber Fallback Gradient */}
+                {proj.image ? (
+                  <img
+                    src={proj.image}
+                    alt={proj.title || 'Project'}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="eager"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0" style={{ background: bgGradient }} />
+                )}
+
+                {/* Dark Glass Vignette Gradient */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, rgba(5,5,10,0.10) 0%, rgba(5,5,10,0.30) 40%, rgba(5,5,10,0.88) 80%, #050508 100%)',
+                  }}
+                />
+
+                {/* Cylindrical Fresnel Glass Lighting Reflection */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      'linear-gradient(90deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.02) 22%, transparent 50%, rgba(0,0,0,0.1) 80%, rgba(0,0,0,0.45) 100%)',
+                  }}
+                />
+
+                {/* Top Badge Pill */}
+                <div className="absolute top-4 right-4 px-2.5 py-0.5 rounded-full bg-black/85 border border-white/28 text-[10px] font-mono font-bold tracking-widest text-zinc-200 uppercase backdrop-blur-md shadow-md pointer-events-none">
+                  {proj.badge || proj.category || 'FEATURED'}
+                </div>
+
+                {/* Bottom Left Info: Title & Monospace Red Subtitle */}
+                <div className="absolute bottom-3.5 left-5 right-28 pointer-events-none">
+                  <div
+                    className="uppercase tracking-wider text-white drop-shadow-md leading-none truncate"
+                    style={{
+                      fontFamily: '"Bebas Neue", "Impact", "Arial Black", sans-serif',
+                      fontSize: '28px',
+                      letterSpacing: '0.05em',
+                      textShadow: '0 2px 10px rgba(0,0,0,0.85)',
+                    }}
+                  >
+                    {proj.title}
+                  </div>
+                  <div
+                    className="font-bold tracking-widest text-red-500 uppercase mt-0.5 drop-shadow truncate"
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '10px',
+                      letterSpacing: '0.12em',
+                      textShadow: '0 1px 4px rgba(0,0,0,0.9)',
+                    }}
+                  >
+                    {proj.tagline || proj.category || 'WEB PLATFORM'}
+                  </div>
+                </div>
+
+                {/* Bottom Right Glowing Live Pill Button */}
+                <div className="absolute bottom-3.5 right-4 px-3 py-1 rounded-full bg-black/90 border border-red-500/85 shadow-[0_0_12px_rgba(239,68,68,0.45)] flex items-center gap-1.5 text-[11px] font-bold text-white tracking-wider pointer-events-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_#ef4444]" />
+                  <span>LIVE ↗</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Top & Bottom Glowing Curved Cylindrical Glass Rims */}
+        <div
+          className="absolute top-8 left-6 right-6 h-6 rounded-[50%] pointer-events-none"
+          style={{
+            borderTop: '1.5px solid rgba(255,255,255,0.22)',
+            boxShadow: '0 -2px 12px rgba(255,255,255,0.06)',
+          }}
+        />
+        <div
+          className="absolute bottom-8 left-6 right-6 h-6 rounded-[50%] pointer-events-none"
+          style={{
+            borderBottom: '1.5px solid rgba(239,68,68,0.25)',
+            boxShadow: '0 2px 14px rgba(239,68,68,0.12)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Main CurvedCylinderShowcase:
+ * Automatically uses WebGL Three.js when supported, AND seamlessly falls back to
+ * ZeroGapCSS3DCylinder if WebGL is unavailable (e.g. Linux Wayland with --use-gl=disabled).
+ */
+export default function CurvedCylinderShowcase(props: CurvedCylinderShowcaseProps) {
+  const [hasWebGL, setHasWebGL] = useState<boolean>(() => checkWebGLSupport());
+
+  // Fallback to ZeroGapCSS3DCylinder if WebGL is not available
+  if (!hasWebGL) {
+    return <ZeroGapCSS3DCylinder {...props} />;
+  }
+
+  return <CurvedCylinderWebGL {...props} onFallback={() => setHasWebGL(false)} />;
+}
+
+/**
+ * CurvedCylinderWebGL:
+ * WebGL 3D cylinder for environments that support WebGL.
+ * If WebGL throws during initialization or rendering, smoothly invokes onFallback().
+ */
+function CurvedCylinderWebGL({
+  projects = [],
+  activeIdx = 0,
+  onActiveChange,
+  onProjectClick,
+  onPauseChange,
+  onFallback,
+}: CurvedCylinderShowcaseProps & { onFallback?: () => void }) {
+  const mountRef = useRef<HTMLDivElement>(null);
+  const currentAngleRef = useRef(0);
+  const isInteractingRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const dragStartAngleRef = useRef(0);
+  const activeIdxRef = useRef(activeIdx);
+  const onActiveChangeRef = useRef(onActiveChange);
+  const onPauseChangeRef = useRef(onPauseChange);
+
+  const lastReportedIdxRef = useRef(activeIdx);
+  const isSnappingRef = useRef(false);
+  const snapTargetAngleRef = useRef(0);
+  const wheelVelocityRef = useRef(0);
+
+  useEffect(() => {
+    onPauseChangeRef.current = onPauseChange;
+  }, [onPauseChange]);
+
+  useEffect(() => {
+    activeIdxRef.current = activeIdx;
+  }, [activeIdx]);
+
+  useEffect(() => {
+    onActiveChangeRef.current = onActiveChange;
+  }, [onActiveChange]);
+
   useEffect(() => {
     if (activeIdx === lastReportedIdxRef.current) return;
     lastReportedIdxRef.current = activeIdx;
@@ -68,34 +466,31 @@ export default function CurvedCylinderShowcase({
     const mount = mountRef.current;
     if (!mount || projects.length === 0) return;
 
-    let renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, carouselGroup: THREE.Group, animationId: number;
+    let renderer: THREE.WebGLRenderer,
+      scene: THREE.Scene,
+      camera: THREE.PerspectiveCamera,
+      carouselGroup: THREE.Group,
+      animationId: number;
     const cardMeshes: THREE.Mesh[] = [];
     const total = projects.length;
 
-    // Compact True Curved Glass Cup Dimensions:
-    // Fixed 5 physical slots with radius 2.75 gives the exact gorgeous curved cup proportion
-    // of 5 projects, regardless of total project count!
     const numSlots = 5;
     const radius = 2.75;
     const height = 1.55;
     const step = (Math.PI * 2) / numSlots;
-    const arcLength = step; // 100% arc - perfectly touching edge-to-edge with ZERO empty gap!
+    const arcLength = step;
 
     try {
       scene = new THREE.Scene();
-
-      // Responsive check
       const isMobileDevice = typeof window !== 'undefined' && window.innerWidth < 768;
 
-      // Camera setup: Perfectly framed with comfortable clearance (no top clipping!)
       const width = mount.clientWidth || 600;
       const heightPx = mount.clientHeight || 420;
 
       camera = new THREE.PerspectiveCamera(46, width / heightPx, 0.1, 100);
-      camera.position.set(0, 0.02, 5.20);
+      camera.position.set(0, 0.02, 5.2);
       camera.lookAt(0, 0.02, 0);
 
-      // WebGL Renderer with Alpha & Antialiasing
       try {
         renderer = new THREE.WebGLRenderer({
           alpha: true,
@@ -123,15 +518,19 @@ export default function CurvedCylinderShowcase({
       mount.appendChild(dom);
 
       carouselGroup = new THREE.Group();
-      // Subtle natural 3D tilt without pushing the top beyond the viewport
       carouselGroup.rotation.x = -0.035;
       scene.add(carouselGroup);
 
-      // ============================================================
-      // 1. Central Dark Obsidian Core
-      // ============================================================
+      // Central obsidian core
       const coreRadius = radius * 0.58;
-      const coreGeom = new THREE.CylinderGeometry(coreRadius, coreRadius, height * 1.15, isMobileDevice ? 16 : 32, 1, false);
+      const coreGeom = new THREE.CylinderGeometry(
+        coreRadius,
+        coreRadius,
+        height * 1.15,
+        isMobileDevice ? 16 : 32,
+        1,
+        false
+      );
       const coreMat = new THREE.MeshBasicMaterial({
         color: 0x050508,
         transparent: true,
@@ -141,16 +540,13 @@ export default function CurvedCylinderShowcase({
       coreMesh.position.y = 0;
       carouselGroup.add(coreMesh);
 
-      // ============================================================
-      // 2. Seamless Curved Glass Panels (CylinderGeometry) with Canvas Textures
-      // ============================================================
+      // Textures and panels
       const textures: any[] = [];
       const texWidth = isMobileDevice ? 512 : 1024;
       const texHeight = isMobileDevice ? 320 : 640;
       const scaleFactor = isMobileDevice ? 0.5 : 1;
 
       projects.forEach((proj: any, idx: number) => {
-        // High-DPI 2D Canvas on desktop, lightweight 512x320 on mobile
         const canvas = document.createElement('canvas');
         canvas.width = texWidth;
         canvas.height = texHeight;
@@ -162,7 +558,6 @@ export default function CurvedCylinderShowcase({
         texture.magFilter = THREE.LinearFilter;
         textures.push({ texture, canvas, ctx, proj, idx, texWidth, texHeight, scaleFactor });
 
-        // Helper to draw the panel contents
         const drawPanel = (img: HTMLImageElement | null = null) => {
           if (!ctx) return;
           ctx.save();
@@ -171,11 +566,9 @@ export default function CurvedCylinderShowcase({
           }
           ctx.clearRect(0, 0, 1024, 640);
 
-          // Card Background
           ctx.fillStyle = '#0a0a14';
           ctx.fillRect(0, 0, 1024, 640);
 
-          // Screenshot Image
           if (img) {
             try {
               ctx.drawImage(img, 0, 0, 1024, 640);
@@ -188,7 +581,6 @@ export default function CurvedCylinderShowcase({
               ctx.fillRect(0, 0, 1024, 640);
             }
           } else {
-            // Elegant cyber fallback gradient
             const grad = ctx.createLinearGradient(0, 0, 1024, 640);
             grad.addColorStop(0, '#1a0508');
             grad.addColorStop(0.5, '#0d0d1a');
@@ -197,95 +589,127 @@ export default function CurvedCylinderShowcase({
             ctx.fillRect(0, 0, 1024, 640);
           }
 
-          // Glass Vignette Gradient
-          const vig = ctx.createLinearGradient(0, 0, 0, 640);
-          vig.addColorStop(0, 'rgba(0,0,0,0.65)');
-          vig.addColorStop(0.35, 'rgba(0,0,0,0.20)');
-          vig.addColorStop(0.7, 'rgba(0,0,0,0.70)');
-          vig.addColorStop(1, 'rgba(0,0,0,0.92)');
-          ctx.fillStyle = vig;
+          const vGrad = ctx.createLinearGradient(0, 0, 0, 640);
+          vGrad.addColorStop(0, 'rgba(5, 5, 8, 0.20)');
+          vGrad.addColorStop(0.4, 'rgba(5, 5, 8, 0.40)');
+          vGrad.addColorStop(0.75, 'rgba(5, 5, 8, 0.88)');
+          vGrad.addColorStop(1, 'rgba(5, 5, 8, 0.98)');
+          ctx.fillStyle = vGrad;
           ctx.fillRect(0, 0, 1024, 640);
 
-          // Seamless Vertical Glass Seam Dividers
-          const seamGrad = ctx.createLinearGradient(0, 0, 0, 640);
-          seamGrad.addColorStop(0, 'rgba(239, 35, 60, 0.45)');
-          seamGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.28)');
-          seamGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.28)');
-          seamGrad.addColorStop(1, 'rgba(239, 35, 60, 0.45)');
-          ctx.fillStyle = seamGrad;
-          ctx.fillRect(0, 0, 2.5, 640);
-          ctx.fillRect(1021.5, 0, 2.5, 640);
+          const hGrad = ctx.createLinearGradient(0, 0, 1024, 0);
+          hGrad.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+          hGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.02)');
+          hGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+          hGrad.addColorStop(0.8, 'rgba(0, 0, 0, 0.1)');
+          hGrad.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
+          ctx.fillStyle = hGrad;
+          ctx.fillRect(0, 0, 1024, 640);
 
-          // Top Badge
-          const badgeText = proj.badge || 'PRODUCTION';
-          ctx.font = 'bold 26px monospace';
-          const badgeWidth = ctx.measureText(badgeText).width + 36;
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
-          if (typeof (ctx as any).roundRect === 'function') {
-            (ctx as any).roundRect(40, 40, badgeWidth, 48, 12);
-          } else {
-            ctx.rect(40, 40, badgeWidth, 48);
-          }
+          ctx.moveTo(1023, 0);
+          ctx.lineTo(1023, 640);
+          ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(1, 0);
+          ctx.lineTo(1, 640);
+          ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.20)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, 1);
+          ctx.lineTo(1024, 1);
+          ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(239, 35, 60, 0.35)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, 639);
+          ctx.lineTo(1024, 639);
+          ctx.stroke();
+
+          const badgeText = (proj.badge || proj.category || 'FEATURED').toUpperCase();
+          ctx.font = 'bold 20px monospace';
+          const badgeMetrics = ctx.measureText(badgeText);
+          const badgeWidth = badgeMetrics.width + 36;
+          const badgeHeight = 36;
+          const badgeX = 1024 - badgeWidth - 40;
+          const badgeY = 36;
+
+          ctx.fillStyle = 'rgba(7, 7, 14, 0.85)';
+          ctx.beginPath();
+          ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, 18);
           ctx.fill();
+
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          ctx.fillStyle = '#e4e4e7';
+          ctx.font = 'bold 18px monospace';
+          ctx.fillText(badgeText, badgeX + 18, badgeY + 24);
+
+          const title = (proj.title || 'UNTITLED PROJECT').toUpperCase();
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '900 52px "Bebas Neue", "Impact", "Arial Black", sans-serif';
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+          ctx.shadowBlur = 12;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 4;
+
+          let displayTitle = title;
+          if (ctx.measureText(displayTitle).width > 720) {
+            while (ctx.measureText(displayTitle + '...').width > 720 && displayTitle.length > 0) {
+              displayTitle = displayTitle.slice(0, -1);
+            }
+            displayTitle += '...';
+          }
+          ctx.fillText(displayTitle, 48, 550);
+
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+
+          const tagline = (proj.tagline || proj.category || 'WEB APPLICATION').toUpperCase();
+          ctx.fillStyle = '#ef233c';
+          ctx.font = 'bold 22px monospace';
+          let displayTagline = tagline;
+          if (ctx.measureText(displayTagline).width > 720) {
+            while (ctx.measureText(displayTagline + '...').width > 720 && displayTagline.length > 0) {
+              displayTagline = displayTagline.slice(0, -1);
+            }
+            displayTagline += '...';
+          }
+          ctx.fillText(displayTagline, 48, 588);
+
+          const liveText = 'LIVE ↗';
+          const pillWidth = 142;
+          const pillHeight = 44;
+          const pillX = 1024 - pillWidth - 48;
+          const pillY = 548;
+          const dotRadius = 5;
+          const dotGap = 9;
+          const pillPadX = 18;
+
+          ctx.shadowColor = 'rgba(239, 35, 60, 0.5)';
+          ctx.shadowBlur = 16;
+          ctx.fillStyle = 'rgba(7, 7, 14, 0.88)';
+          ctx.beginPath();
+          ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 22);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(239, 35, 60, 0.95)';
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          ctx.fillStyle = '#ffffff';
-          ctx.fillText(badgeText, 58, 73);
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
 
-          // Bottom Bar - Title & Category
-          ctx.font = 'bold 58px "Bebas Neue", sans-serif';
-          ctx.fillStyle = '#ffffff';
-          ctx.fillText(proj.title || 'PROJECT TITLE', 45, 545);
-
-          ctx.font = 'bold 24px monospace';
-          ctx.fillStyle = '#ef233c';
-          ctx.fillText(proj.category || 'AI SOFTWARE & ARCHITECTURE', 45, 585);
-
-          // LIVE Action Pill
-          const liveText = 'LIVE ↗';
-          ctx.font = 'bold 24px monospace';
-          const textWidth = ctx.measureText(liveText).width;
-          const dotRadius = 4.5;
-          const dotGap = 10;
-          const pillPadX = 20;
-          const pillWidth = pillPadX + (dotRadius * 2) + dotGap + textWidth + pillPadX;
-          const pillHeight = 46;
-          const pillX = 1024 - 58 - pillWidth;
-          const pillY = 528;
-
-          // Ambient halo glow behind pill
-          const pillGlow = ctx.createRadialGradient(
-            pillX + pillWidth / 2, pillY + pillHeight / 2, 4,
-            pillX + pillWidth / 2, pillY + pillHeight / 2, pillWidth * 0.75
-          );
-          pillGlow.addColorStop(0, 'rgba(239, 35, 60, 0.35)');
-          pillGlow.addColorStop(1, 'rgba(239, 35, 60, 0)');
-          ctx.fillStyle = pillGlow;
-          ctx.fillRect(pillX - 18, pillY - 14, pillWidth + 36, pillHeight + 28);
-
-          // Glass pill body
-          ctx.fillStyle = 'rgba(7, 7, 14, 0.88)';
-          ctx.beginPath();
-          if (typeof (ctx as any).roundRect === 'function') {
-            (ctx as any).roundRect(pillX, pillY, pillWidth, pillHeight, 14);
-          } else {
-            ctx.rect(pillX, pillY, pillWidth, pillHeight);
-          }
-          ctx.fill();
-
-          // Border
-          const borderGrad = ctx.createLinearGradient(pillX, pillY, pillX + pillWidth, pillY + pillHeight);
-          borderGrad.addColorStop(0, 'rgba(239, 35, 60, 0.95)');
-          borderGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.45)');
-          borderGrad.addColorStop(1, 'rgba(239, 35, 60, 0.95)');
-          ctx.strokeStyle = borderGrad;
-          ctx.lineWidth = 1.8;
-          ctx.stroke();
-
-          // Dot
           const dotX = pillX + pillPadX + dotRadius;
           const dotY = pillY + pillHeight / 2;
           ctx.fillStyle = '#ef233c';
@@ -293,52 +717,42 @@ export default function CurvedCylinderShowcase({
           ctx.arc(dotX, dotY, dotRadius, 0, Math.PI * 2);
           ctx.fill();
 
-          // Label
           ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 22px monospace';
-          ctx.fillText(liveText, dotX + dotRadius + dotGap, pillY + 31);
+          ctx.font = 'bold 20px monospace';
+          ctx.fillText(liveText, dotX + dotRadius + dotGap, pillY + 28);
 
           ctx.restore();
           texture.needsUpdate = true;
         };
 
-        // Initial draw with fallback
         drawPanel();
 
-        // Load project screenshot asynchronously
         if (proj.image) {
           const img = new Image();
           img.crossOrigin = 'anonymous';
           img.onload = () => drawPanel(img);
-          img.onerror = () => drawPanel(null);
           img.src = proj.image;
         }
       });
 
-      // ============================================================
-      // 3. Create Fixed 5 Physical Curved Glass Slot Meshes (True Cup Proportions)
-      // ============================================================
       for (let s = 0; s < numSlots; s++) {
         const initialProjIdx = s % total;
-        // Three.js CylinderGeometry curved along the circle arc:
-        // thetaStart begins at s * step, length is arcLength
         const thetaStart = s * step - arcLength / 2;
         const panelGeom = new THREE.CylinderGeometry(
           radius,
           radius,
           height,
-          32, // 32 radial segments across 72deg arc gives butter-smooth curvature
+          32,
           1,
           true,
           thetaStart,
           arcLength
         );
 
-        // FrontSide ensures that when the card goes to the back, it naturally vanishes into dark core
         const panelMat = new THREE.MeshBasicMaterial({
-          map: textures[initialProjIdx]?.texture,
+          map: textures[initialProjIdx].texture,
           transparent: true,
-          side: THREE.DoubleSide,
+          side: THREE.FrontSide,
         });
 
         const panelMesh = new THREE.Mesh(panelGeom, panelMat);
@@ -351,9 +765,6 @@ export default function CurvedCylinderShowcase({
         carouselGroup.add(panelMesh);
       }
 
-      // ============================================================
-      // 4. Raycasting & Interaction (Hover, Drag, Click)
-      // ============================================================
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();
 
@@ -367,14 +778,14 @@ export default function CurvedCylinderShowcase({
 
       const handlePointerDown = (e: any) => {
         if (e.button !== undefined && e.button !== 0 && e.button !== 1) return;
-        if (e.button === 1) e.preventDefault(); // prevent middle-click auto-scroll icon
+        if (e.button === 1) e.preventDefault();
         isSnappingRef.current = false;
         wheelVelocityRef.current = 0;
         isDraggingRef.current = true;
         isInteractingRef.current = true;
-        onPauseChangeRef.current?.(true);
         dragStartXRef.current = e.clientX || e.touches?.[0]?.clientX || 0;
         dragStartAngleRef.current = currentAngleRef.current;
+        onPauseChangeRef.current?.(true);
       };
 
       const handlePointerMove = (e: any) => {
@@ -386,42 +797,23 @@ export default function CurvedCylinderShowcase({
         } else {
           raycaster.setFromCamera(mouse, camera);
           const intersects = raycaster.intersectObjects(cardMeshes);
-          if (intersects.length > 0) {
-            dom.style.cursor = 'pointer';
-          } else {
-            dom.style.cursor = 'grab';
-          }
+          dom.style.cursor = intersects.length > 0 ? 'pointer' : 'grab';
         }
       };
 
       const handlePointerUp = () => {
-        if (isDraggingRef.current) {
-          isDraggingRef.current = false;
-        }
+        if (isDraggingRef.current) isDraggingRef.current = false;
         isInteractingRef.current = false;
         onPauseChangeRef.current?.(false);
       };
 
-      const handleMouseLeave = () => {
-        if (isDraggingRef.current) {
-          isDraggingRef.current = false;
-        }
-        isInteractingRef.current = false;
-        onPauseChangeRef.current?.(false);
-      };
-
-      // Mouse Wheel Handler
       const handleWheel = (e: WheelEvent) => {
         e.preventDefault();
-        e.stopPropagation();
-
         isSnappingRef.current = false;
         const delta = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
         if (Math.abs(delta) < 0.2) return;
-
         wheelVelocityRef.current -= delta * 0.0028;
         wheelVelocityRef.current = Math.max(-2.8, Math.min(2.8, wheelVelocityRef.current));
-        currentAngleRef.current -= delta * 0.0008;
       };
 
       const handleClick = (e: any) => {
@@ -433,8 +825,10 @@ export default function CurvedCylinderShowcase({
           const proj = projects[hit.currentProjIdx] || hit.proj;
           if (onProjectClick) {
             onProjectClick(proj);
-          } else if (proj && proj.demoUrl) {
+          } else if (proj?.demoUrl && proj.demoUrl !== 'https://github.com/stl-sahadat') {
             window.open(proj.demoUrl, '_blank', 'noopener,noreferrer');
+          } else if (proj?.githubUrl) {
+            window.open(proj.githubUrl, '_blank', 'noopener,noreferrer');
           }
         }
       };
@@ -442,7 +836,7 @@ export default function CurvedCylinderShowcase({
       dom.addEventListener('mousedown', handlePointerDown);
       window.addEventListener('mousemove', handlePointerMove);
       window.addEventListener('mouseup', handlePointerUp);
-      dom.addEventListener('mouseleave', handleMouseLeave);
+      dom.addEventListener('mouseleave', handlePointerUp);
       dom.addEventListener('wheel', handleWheel, { passive: false });
       dom.addEventListener('click', handleClick);
 
@@ -450,9 +844,6 @@ export default function CurvedCylinderShowcase({
       window.addEventListener('touchmove', handlePointerMove, { passive: true });
       window.addEventListener('touchend', handlePointerUp);
 
-      // ============================================================
-      // 5. Responsive Resize
-      // ============================================================
       const handleResize = () => {
         if (!mount) return;
         const newWidth = mount.clientWidth || 600;
@@ -464,7 +855,6 @@ export default function CurvedCylinderShowcase({
       };
       window.addEventListener('resize', handleResize);
 
-      // Robust ResizeObserver so canvas adjusts immediately when parent layout resolves
       let resizeObserver: ResizeObserver | null = null;
       if (typeof ResizeObserver !== 'undefined' && mount) {
         resizeObserver = new ResizeObserver((entries) => {
@@ -482,22 +872,15 @@ export default function CurvedCylinderShowcase({
         resizeObserver.observe(mount);
       }
 
-      // ============================================================
-      // 6. Smooth 60fps Animation Loop (Active, Responsive & Continuous)
-      // ============================================================
       let lastTime = performance.now();
-
-      // Immediate first-frame render so cylinder is NEVER blank!
       renderer.render(scene, camera);
 
       const animate = (now: number) => {
         animationId = requestAnimationFrame(animate);
-
         const delta = Math.min((now - lastTime) / 1000, 0.05);
         lastTime = now;
 
         if (isSnappingRef.current) {
-          // Smooth glide to the clicked project
           const diff = snapTargetAngleRef.current - currentAngleRef.current;
           if (Math.abs(diff) < 0.005) {
             currentAngleRef.current = snapTargetAngleRef.current;
@@ -506,19 +889,14 @@ export default function CurvedCylinderShowcase({
             currentAngleRef.current += diff * 0.12;
           }
         } else if (!isDraggingRef.current) {
-          // Brisk, majestic 0.165 rad/sec baseline rotation + wheel momentum
           const baseSpeed = 0.165;
           currentAngleRef.current += (-baseSpeed + wheelVelocityRef.current) * delta;
-          // Smoothly decay wheel velocity back to zero over ~1 second
           wheelVelocityRef.current *= 0.94;
-          if (Math.abs(wheelVelocityRef.current) < 0.001) {
-            wheelVelocityRef.current = 0;
-          }
+          if (Math.abs(wheelVelocityRef.current) < 0.001) wheelVelocityRef.current = 0;
         }
 
         carouselGroup.rotation.y = currentAngleRef.current;
 
-        // Seamless Virtual Streaming: Silently swap textures when a slot is passing through the dark back
         if (total > numSlots) {
           for (let s = 0; s < numSlots; s++) {
             const slotWorldAngle = currentAngleRef.current + s * step;
@@ -537,15 +915,12 @@ export default function CurvedCylinderShowcase({
           }
         }
 
-        // Detect which project card is currently front-facing
         const stepProgress = -currentAngleRef.current / step;
         const frontIdx = ((Math.round(stepProgress) % total) + total) % total;
         if (frontIdx !== activeIdxRef.current) {
           activeIdxRef.current = frontIdx;
-          lastReportedIdxRef.current = frontIdx; // CRITICAL: prevents cyclic re-triggering!
-          if (onActiveChangeRef.current) {
-            onActiveChangeRef.current(frontIdx);
-          }
+          lastReportedIdxRef.current = frontIdx;
+          if (onActiveChangeRef.current) onActiveChangeRef.current(frontIdx);
         }
 
         renderer.render(scene, camera);
@@ -553,7 +928,6 @@ export default function CurvedCylinderShowcase({
 
       animationId = requestAnimationFrame(animate);
 
-      // Cleanup on unmount
       return () => {
         if (resizeObserver) resizeObserver.disconnect();
         cancelAnimationFrame(animationId);
@@ -561,19 +935,18 @@ export default function CurvedCylinderShowcase({
         dom.removeEventListener('mousedown', handlePointerDown);
         window.removeEventListener('mousemove', handlePointerMove);
         window.removeEventListener('mouseup', handlePointerUp);
-        dom.removeEventListener('mouseleave', handleMouseLeave);
+        dom.removeEventListener('mouseleave', handlePointerUp);
         dom.removeEventListener('wheel', handleWheel);
         dom.removeEventListener('click', handleClick);
         dom.removeEventListener('touchstart', handlePointerDown);
         window.removeEventListener('touchmove', handlePointerMove);
         window.removeEventListener('touchend', handlePointerUp);
-        if (mount.contains(dom)) {
-          mount.removeChild(dom);
-        }
+        if (mount.contains(dom)) mount.removeChild(dom);
         renderer.dispose();
       };
     } catch (err) {
-      console.error('Three.js Curved Cylinder error:', err);
+      console.warn('Three.js WebGL error, switching to ZeroGapCSS3DCylinder fallback:', err);
+      onFallback?.();
     }
   }, [projects]);
 
